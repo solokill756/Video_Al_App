@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:dmvgenie/src/core/data/remote/interceptors/auth_interceptor.dart';
 import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
 import 'package:result_dart/result_dart.dart';
@@ -26,9 +27,11 @@ abstract class ApiModule {
           baseUrl: url,
           headers: {'accept': 'application/json'},
           connectTimeout: const Duration(seconds: AppConstants.connectTimeout),
+          receiveTimeout: const Duration(seconds: AppConstants.connectTimeout),
+          sendTimeout: const Duration(seconds: AppConstants.connectTimeout),
         ),
       )..interceptors.addAll([
-          // AuthInterceptor(),
+          AuthInterceptor(Dio()),
           TalkerDioLogger(
             talker: talker,
             settings: TalkerDioLoggerSettings(
@@ -103,13 +106,48 @@ extension DioExceptionX on DioException {
       return error as ApiError;
     } else {
       final statusCode = response?.statusCode ?? -1;
+      final responseData = response?.data;
+
+      // Xử lý validation errors đặc biệt
+      if (statusCode == 400 && responseData is Map<String, dynamic>) {
+        final messageField = responseData['message'];
+
+        // Kiểm tra nếu message là array (validation errors)
+        if (messageField is List) {
+          try {
+            final List<ValidationErrorDetail> validationErrors = messageField
+                .map((e) =>
+                    ValidationErrorDetail.fromJson(e as Map<String, dynamic>))
+                .toList();
+
+            return ApiError.validation(
+              statusCode: responseData['statusCode'] ?? 400,
+              errors: validationErrors,
+            );
+          } catch (e) {
+            // Nếu không parse được thì fallback về server error
+            return ApiError.server(
+                code: statusCode, message: "Validation error occurred");
+          }
+        }
+      }
+
+      // Xử lý các loại error khác như cũ
       String? responseMessage;
-      if (response?.data is Map<String, dynamic>) {
-        responseMessage = response?.data?['message'];
+      if (responseData is Map<String, dynamic>) {
+        final messageField = responseData['message'];
+        if (messageField is String) {
+          responseMessage = messageField;
+        } else if (messageField is List && messageField.isNotEmpty) {
+          // Nếu là list nhưng không parse được thì lấy item đầu tiên
+          responseMessage = messageField.first.toString();
+        }
+
         if (responseMessage.isNotNullOrBlank && kDebugMode) {
           responseMessage = '$responseMessage';
         }
       }
+
       responseMessage = responseMessage ?? "S.Error unexpected";
       if (statusCode == 401) {
         return ApiError.unauthorized(responseMessage);

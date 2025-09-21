@@ -22,6 +22,7 @@ dependencies:
   #state management
   bloc: ^9.0.0
   flutter_bloc: ^9.0.0
+  equatable: ^2.0.5
 
   dartx: ^1.2.0
   result_dart: ^1.1.1
@@ -75,10 +76,10 @@ dev_dependencies:
   mocktail: ^1.0.4
   bloc_test: ^10.0.0
   build_runner: ^2.4.9
-  freezed: ^2.5.3
+  freezed: ^2.5.2
   json_serializable: ^6.7.1
   auto_route_generator: ^8.0.0
-  flutter_gen_runner: ^5.4.0
+  # flutter_gen_runner: ^5.9.0 # Tạm thời comment để tránh lỗi với dart_style
   intl_utils: ^2.8.7
   injectable_generator: ^2.6.1
   retrofit_generator: ^8.1.0

@@ -75,10 +75,16 @@ class Storage {
   static Future setAccessToken(String? val) =>
       _setSecure(_Keys.accessToken, val);
 
-  static Future<String?> get refreshToken => _getSecure(_Keys.accessToken);
+  static Future<void> removeAccessToken() =>
+      _storage.delete(key: _Keys.accessToken);
+
+  static Future<String?> get refreshToken => _getSecure(_Keys.refreshToken);
 
   static Future setRefreshToken(String? val) =>
       _setSecure(_Keys.refreshToken, val);
+
+  static Future<void> removeRefreshToken() =>
+      _storage.delete(key: _Keys.refreshToken);
 
   static Future setDeviceId(String? val) => _set(_Keys.deviceId, val);
 

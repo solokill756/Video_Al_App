@@ -15,7 +15,7 @@ class SplashPage extends StatelessWidget {
 
   fetchAll() async {
     await Future.delayed(3.seconds);
-    getIt<AppRouter>().replaceAll([HomeRoute()]);
+    getIt<AppRouter>().replaceAll([VideoSearchHomeRoute()]);
   }
 
   @override

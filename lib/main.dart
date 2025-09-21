@@ -1,11 +1,14 @@
 import 'dart:async';
 import 'dart:isolate';
 
+import 'package:dmvgenie/src/modules/auth/presentation/application/cubit/auth_cubit.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:get_it/get_it.dart';
 import 'package:oktoast/oktoast.dart';
+import 'package:provider/provider.dart';
 import 'package:sizer/sizer.dart';
 import 'package:talker_bloc_logger/talker_bloc_logger_observer.dart';
 import 'package:talker_flutter/talker_flutter.dart';
@@ -14,6 +17,8 @@ import 'src/common/utils/app_environment.dart';
 import 'src/common/utils/getit_utils.dart';
 import 'src/common/widgets/only_one_point_widget.dart';
 import 'src/core/data/local/storage.dart';
+import 'src/modules/Settings/presentation/application/settings_cubit/settings_cubit.dart';
+import 'src/modules/app/app_router.dart';
 import 'src/modules/app/app_widget.dart';
 
 Future<void> main() async {
@@ -30,7 +35,21 @@ Future<void> main() async {
 
     Bloc.observer = TalkerBlocObserver(talker: talker);
 
-    runApp(const OnlyOnePointerRecognizerWidget(child: AppWidget()));
+    runApp(
+      OnlyOnePointerRecognizerWidget(
+        child: MultiProvider(
+          providers: [
+            BlocProvider(
+              create: (context) => GetIt.instance<AuthCubit>(),
+            ),
+            BlocProvider(
+              create: (context) => GetIt.instance<SettingsCubit>(),
+            ),
+          ],
+          child: const AppWidget(),
+        ),
+      ),
+    );
     configLoading();
   }, (error, stack) {
     getIt<Talker>().handle(error, stack);
@@ -44,9 +63,15 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return OKToast(
       child: Sizer(builder: (context, orientation, deviceType) {
-        return MaterialApp(
+        return MaterialApp.router(
           debugShowCheckedModeBanner: false,
           builder: EasyLoading.init(),
+          theme: ThemeData(
+            primarySwatch: Colors.blue,
+            visualDensity: VisualDensity.adaptivePlatformDensity,
+          ),
+          title: 'VideoAI',
+          routerConfig: getIt<AppRouter>().config(),
         );
       }),
     );
