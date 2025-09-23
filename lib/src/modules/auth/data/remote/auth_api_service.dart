@@ -5,6 +5,8 @@ import '../../../../core/data/local/storage.dart';
 import '../../../../core/data/remote/base/api_response.dart';
 import '../models/login_request.dart';
 import '../models/login_response.dart';
+import '../models/register_request.dart';
+import '../models/send_otp_request.dart';
 
 @injectable
 class AuthApiService {
@@ -29,24 +31,18 @@ class AuthApiService {
   }
 
   /// Register tài khoản mới
-  Future<StatusApiResponse> register(Map<String, dynamic> request) async {
-    try {
-      if (request['email']?.toString().isEmpty ?? true) {
-        throw Exception('Email không được để trống');
-      }
-
-      final response = await _dio.post(
-        '/auth/register',
-        data: request,
-      );
-      return StatusApiResponse.fromJson(response.data);
-    } on DioException {
-      // Handle Dio errors
-      rethrow;
-    } catch (e) {
-      print('AuthApiService: Register error: $e');
-      rethrow;
-    }
+  Future<StatusApiResponse> register(RegisterRequest request) async {
+    final response = await _dio.post(
+      '/auth/register',
+      data: request.toJson(),
+    );
+    final responseData = response.data as Map<String, dynamic>;
+    final message =
+        responseData['message'] as String? ?? 'Registration successful';
+    return StatusApiResponse(
+      message: message,
+      statusCode: response.statusCode!,
+    );
   }
 
   /// Refresh token để lấy access token mới
@@ -121,5 +117,23 @@ class AuthApiService {
   Future<StatusApiResponse> resendEmailVerification() async {
     final response = await _dio.post('/auth/resend-verification');
     return StatusApiResponse.fromJson(response.data);
+  }
+
+  // Gửi OTP đến email
+  Future<StatusApiResponse> sendOtp(SendOtpRequest request) async {
+    final response = await _dio.post(
+      '/auth/otp',
+      data: request.toJson(),
+    );
+
+    // Parse response data
+    final responseData = response.data as Map<String, dynamic>;
+    final message =
+        responseData['message'] as String? ?? 'OTP sent successfully';
+
+    return StatusApiResponse(
+      message: message,
+      statusCode: response.statusCode!,
+    );
   }
 }

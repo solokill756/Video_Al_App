@@ -28,7 +28,7 @@ class _VideoSearchHomeState extends State<VideoSearchHomeView> {
   void initState() {
     super.initState();
 
-    // Thiết lập status bar
+    // Set status bar
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
@@ -184,7 +184,7 @@ class _VideoSearchHomeState extends State<VideoSearchHomeView> {
           color: Color(0xFF1F2937),
         ),
         decoration: InputDecoration(
-          hintText: 'Tìm kiếm video...',
+          hintText: 'Search for videos...',
           hintStyle: const TextStyle(
             color: Color(0xFF9CA3AF),
             fontSize: 16,
@@ -286,7 +286,7 @@ class _VideoSearchHomeState extends State<VideoSearchHomeView> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: const Text(
-            'Tìm kiếm và truy xuất video thông minh bằng AI - Nhập text hoặc upload hình ảnh để tìm nội dung video mong muốn',
+            'Smart video search and retrieval with AI - Enter text or upload an image to find the video content you want.',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 16,
@@ -307,9 +307,9 @@ class _VideoSearchHomeState extends State<VideoSearchHomeView> {
           icon: Icons.search,
           iconColor: const Color(0xFF0D9488),
           iconBgColor: const Color(0xFFE6FFFA),
-          title: 'Tìm kiếm bằng Text',
+          title: 'Search by Text',
           description:
-              'Nhập mô tả nội dung bạn muốn tìm, hệ thống AI sẽ phân tích và đưa bạn đến đúng thời điểm trong video.',
+              'Enter a description of the content you want to find. The AI system will analyze and take you to the right moment in the video.',
           onTap: () => _handleTextSearch(),
         ),
 
@@ -320,9 +320,9 @@ class _VideoSearchHomeState extends State<VideoSearchHomeView> {
           icon: Icons.image_outlined,
           iconColor: const Color(0xFF7C3AED),
           iconBgColor: const Color(0xFFF3E8FF),
-          title: 'Tìm kiếm bằng Hình ảnh',
+          title: 'Search by Image',
           description:
-              'Upload hình ảnh và tìm những video có nội dung tương tự. AI sẽ nhận diện và khớp với khung hình trong video.',
+              'Upload an image and find videos with similar content. AI will recognize and match frames in the video.',
           onTap: () => _handleImageSearch(),
         ),
       ],
@@ -467,7 +467,7 @@ class _VideoSearchHomeState extends State<VideoSearchHomeView> {
                 // Title
                 const Expanded(
                   child: Text(
-                    'Phân tích nội dung',
+                    'Content Analysis',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -489,7 +489,7 @@ class _VideoSearchHomeState extends State<VideoSearchHomeView> {
 
             // Description
             const Text(
-              'Hệ thống phân tích transcript, audio và visual để tìm chính xác nội dung bạn cần trong video.',
+              'The system analyzes transcript, audio, and visuals to accurately find the content you need in the video.',
               style: TextStyle(
                 fontSize: 14,
                 color: Color(0xFF6B7280),
@@ -526,7 +526,7 @@ class _VideoSearchHomeState extends State<VideoSearchHomeView> {
       child: Column(
         children: [
           const Text(
-            'Tìm kiếm video thông minh ngay hôm nay',
+            'Start smart video search today',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 24,
@@ -539,7 +539,7 @@ class _VideoSearchHomeState extends State<VideoSearchHomeView> {
           const SizedBox(height: 16),
 
           const Text(
-            'Khám phá công nghệ AI để tìm kiếm và truy xuất nội dung video một cách chính xác',
+            'Discover AI technology to search and retrieve video content accurately',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 16,
@@ -573,7 +573,7 @@ class _VideoSearchHomeState extends State<VideoSearchHomeView> {
                     ),
                   ),
                   child: const Text(
-                    'Bắt đầu tìm kiếm',
+                    'Start searching',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -616,7 +616,7 @@ class _VideoSearchHomeState extends State<VideoSearchHomeView> {
               const Padding(
                 padding: EdgeInsets.all(20),
                 child: Text(
-                  'Phân tích nội dung video',
+                  'Video Content Analysis',
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -631,22 +631,20 @@ class _VideoSearchHomeState extends State<VideoSearchHomeView> {
                     children: [
                       _buildAnalysisFeature(
                         icon: Icons.subtitles_outlined,
-                        title: 'Phân tích Transcript',
-                        description:
-                            'Tìm kiếm trong nội dung văn bản của video',
+                        title: 'Transcript Analysis',
+                        description: 'Search within the video\'s text content',
                       ),
                       const SizedBox(height: 16),
                       _buildAnalysisFeature(
                         icon: Icons.audiotrack_outlined,
-                        title: 'Phân tích Audio',
-                        description:
-                            'Nhận diện giọng nói và âm thanh trong video',
+                        title: 'Audio Analysis',
+                        description: 'Recognize voices and sounds in the video',
                       ),
                       const SizedBox(height: 16),
                       _buildAnalysisFeature(
                         icon: Icons.image_outlined,
-                        title: 'Phân tích Visual',
-                        description: 'Nhận diện đối tượng và cảnh trong video',
+                        title: 'Visual Analysis',
+                        description: 'Detect objects and scenes in the video',
                       ),
                     ],
                   ),
@@ -725,7 +723,7 @@ class _VideoSearchHomeState extends State<VideoSearchHomeView> {
       _searchFocus.requestFocus();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Vui lòng nhập từ khóa tìm kiếm'),
+          content: const Text('Please enter a search keyword'),
           backgroundColor: const Color(0xFFEF4444),
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
@@ -744,14 +742,14 @@ class _VideoSearchHomeState extends State<VideoSearchHomeView> {
           borderRadius: BorderRadius.circular(16),
         ),
         title: const Text(
-          'Video Demo',
+          'Demo Video',
           style: TextStyle(
             fontWeight: FontWeight.bold,
             color: Color(0xFF1F2937),
           ),
         ),
         content: const Text(
-          'Demo video sẽ hiển thị cách sử dụng tính năng tìm kiếm video thông minh với AI.',
+          'The demo video will show how to use the smart video search feature with AI.',
           style: TextStyle(
             color: Color(0xFF6B7280),
           ),
@@ -760,7 +758,7 @@ class _VideoSearchHomeState extends State<VideoSearchHomeView> {
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text(
-              'Đóng',
+              'Close',
               style: TextStyle(color: Color(0xFF6B7280)),
             ),
           ),
@@ -776,7 +774,7 @@ class _VideoSearchHomeState extends State<VideoSearchHomeView> {
               ),
             ),
             child: const Text(
-              'Xem Demo',
+              'Watch Demo',
               style: TextStyle(color: Colors.white),
             ),
           ),
@@ -788,7 +786,7 @@ class _VideoSearchHomeState extends State<VideoSearchHomeView> {
   void _playDemo() {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: const Text('Đang tải video demo...'),
+        content: const Text('Loading demo video...'),
         backgroundColor: const Color(0xFF0D9488),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
@@ -829,17 +827,17 @@ class _VideoSearchHomeState extends State<VideoSearchHomeView> {
               ),
               ListTile(
                 leading: const Icon(Icons.settings),
-                title: const Text('Cài đặt'),
+                title: const Text('Settings'),
                 onTap: () => context.router.push(SettingsRoute()),
               ),
               ListTile(
                 leading: const Icon(Icons.history),
-                title: const Text('Lịch sử tìm kiếm'),
+                title: const Text('Search History'),
                 onTap: () => Navigator.pop(context),
               ),
               ListTile(
                 leading: const Icon(Icons.help_outline),
-                title: const Text('Trợ giúp'),
+                title: const Text('Help'),
                 onTap: () => Navigator.pop(context),
               ),
               const SizedBox(height: 20),
@@ -908,7 +906,7 @@ class _VideoSearchHomeState extends State<VideoSearchHomeView> {
               const Padding(
                 padding: EdgeInsets.all(20),
                 child: Text(
-                  'Chọn hình ảnh',
+                  'Select Image',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -918,7 +916,7 @@ class _VideoSearchHomeState extends State<VideoSearchHomeView> {
               ),
               ListTile(
                 leading: const Icon(Icons.camera_alt, color: Color(0xFF0D9488)),
-                title: const Text('Chụp ảnh'),
+                title: const Text('Take Photo'),
                 onTap: () {
                   Navigator.pop(context);
                   _pickImageFromCamera();
@@ -927,7 +925,7 @@ class _VideoSearchHomeState extends State<VideoSearchHomeView> {
               ListTile(
                 leading:
                     const Icon(Icons.photo_library, color: Color(0xFF7C3AED)),
-                title: const Text('Chọn từ thư viện'),
+                title: const Text('Choose from Gallery'),
                 onTap: () {
                   Navigator.pop(context);
                   _pickImageFromGallery();
@@ -944,7 +942,7 @@ class _VideoSearchHomeState extends State<VideoSearchHomeView> {
   void _pickImageFromCamera() {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: const Text('Đang mở camera...'),
+        content: const Text('Opening camera...'),
         backgroundColor: const Color(0xFF0D9488),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
@@ -957,7 +955,7 @@ class _VideoSearchHomeState extends State<VideoSearchHomeView> {
   void _pickImageFromGallery() {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: const Text('Đang mở thư viện...'),
+        content: const Text('Opening gallery...'),
         backgroundColor: const Color(0xFF7C3AED),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
@@ -970,14 +968,14 @@ class _VideoSearchHomeState extends State<VideoSearchHomeView> {
   void _showSearchResults(String query) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Đang tìm kiếm: "$query"'),
+        content: Text('Searching: "$query"'),
         backgroundColor: const Color(0xFF0D9488),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
         action: SnackBarAction(
-          label: 'Xem kết quả',
+          label: 'View Results',
           textColor: Colors.white,
           onPressed: () {
             // Navigate to results page

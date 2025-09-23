@@ -5,6 +5,8 @@ import 'package:injectable/injectable.dart';
 import '../../common/guards/auth_guard.dart';
 import '../Settings/presentation/pages/settings_page.dart';
 import '../auth/presentation/pages/login_page.dart';
+import '../auth/presentation/pages/register_page.dart';
+import '../auth/presentation/pages/register_detail_page.dart';
 import '../home/presentation/pages/home_page.dart';
 import 'splash_page.dart';
 
@@ -20,6 +22,8 @@ class AppRouter extends _$AppRouter {
             page: VideoSearchHomeRoute.page, path: '/', guards: [_authGuard]),
         AutoRoute(page: SplashRoute.page, path: '/slash'),
         AutoRoute(page: LoginRoute.page, path: '/login'),
+        AutoRoute(page: RegisterRoute.page, path: '/register'),
+        AutoRoute(page: RegisterDetailRoute.page, path: '/register-detail'),
         AutoRoute(
             page: SettingsRoute.page, path: '/settings', guards: [_authGuard]),
       ];
