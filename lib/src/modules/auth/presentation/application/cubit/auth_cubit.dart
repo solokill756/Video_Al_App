@@ -1,6 +1,7 @@
 import 'package:bloc/bloc.dart';
 import 'package:injectable/injectable.dart';
 
+import '../../../data/models/register_request.dart';
 import '../../../domain/repository/auth_repository.dart';
 import 'auth_state.dart';
 
@@ -40,6 +41,46 @@ class AuthCubit extends Cubit<AuthState> {
     );
   }
 
+  Future<void> register({
+    required String email,
+    required String password,
+    required String name,
+    required String phoneNumber,
+    required String otpCode,
+    required String confirmPassword,
+  }) async {
+    emit(const AuthState.loading());
+
+    final result = await _authRepository.register(
+      request: RegisterRequest(
+        email: email,
+        password: password,
+        name: name,
+        phoneNumber: phoneNumber,
+        otpCode: otpCode,
+        confirmPassword: confirmPassword,
+      ),
+    );
+
+    result.fold(
+      (registerResponse) {
+        emit(AuthState.sendOtpSuccess(registerResponse));
+      },
+      (error) {
+        // Sử dụng pattern matching để check validation error
+        error.maybeWhen(
+          (code, message) => emit(AuthState.error(error.message)),
+          validation: (statusCode, errors) {
+            emit(AuthState.validationError(error));
+          },
+          orElse: () {
+            emit(AuthState.error(error.message));
+          },
+        );
+      },
+    );
+  }
+
   Future<void> refreshToken() async {
     final result = await _authRepository.refreshToken();
 
@@ -49,6 +90,36 @@ class AuthCubit extends Cubit<AuthState> {
       },
       (error) {
         emit(AuthState.error(error.message));
+      },
+    );
+  }
+
+  Future<void> sendOtp({
+    required String email,
+    String type = 'REGISTER',
+  }) async {
+    emit(const AuthState.loading());
+
+    final result = await _authRepository.sendOtp(
+      email: email,
+      type: type,
+    );
+
+    result.fold(
+      (sendOtpResponse) {
+        emit(AuthState.sendOtpSuccess(sendOtpResponse));
+      },
+      (error) {
+        // Sử dụng pattern matching để check validation error
+        error.maybeWhen(
+          (code, message) => emit(AuthState.error(error.message)),
+          validation: (statusCode, errors) {
+            emit(AuthState.validationError(error));
+          },
+          orElse: () {
+            emit(AuthState.error(error.message));
+          },
+        );
       },
     );
   }

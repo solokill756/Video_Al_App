@@ -2,10 +2,13 @@ import 'package:injectable/injectable.dart';
 import 'package:result_dart/result_dart.dart';
 
 import '../../../../core/data/remote/base/api_error.dart';
+import '../../../../core/data/remote/base/api_response.dart';
 import '../../../../core/data/remote/services/api_service.dart';
 import '../../../../core/data/local/storage.dart';
 import '../models/login_request.dart';
 import '../models/login_response.dart';
+import '../models/register_request.dart';
+import '../models/send_otp_request.dart';
 import '../remote/auth_api_service.dart';
 import '../../domain/repository/auth_repository.dart';
 
@@ -66,17 +69,20 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Result<Unit, ApiError>> register({
-    required String name,
-    required String email,
-    required String password,
+  Future<Result<StatusApiResponse, ApiError>> register({
+    required RegisterRequest request,
   }) async {
-    final request = {
-      'name': name,
-      'email': email,
-      'password': password,
-    };
+    return _authApiService.register(request).tryGet((response) => response);
+  }
 
-    return _authApiService.register(request).tryGet((response) => unit);
+  @override
+  Future<Result<StatusApiResponse, ApiError>> sendOtp({
+    required String email,
+    String type = 'REGISTER',
+  }) async {
+    final request = SendOtpRequest(email: email, type: type);
+    return await _authApiService
+        .sendOtp(request)
+        .tryGet((response) => response);
   }
 }

@@ -1,6 +1,8 @@
+import 'package:dmvgenie/src/modules/auth/data/models/register_request.dart';
 import 'package:result_dart/result_dart.dart';
 
 import '../../../../core/data/remote/base/api_error.dart';
+import '../../../../core/data/remote/base/api_response.dart';
 import '../../data/models/login_response.dart';
 
 abstract class AuthRepository {
@@ -11,9 +13,12 @@ abstract class AuthRepository {
 
   Future<Result<LoginResponse, ApiError>> refreshToken();
 
-  Future<Result<Unit, ApiError>> register({
-    required String name,
+  Future<Result<StatusApiResponse, ApiError>> sendOtp({
     required String email,
-    required String password,
+    String type = 'REGISTER',
+  });
+
+  Future<Result<StatusApiResponse, ApiError>> register({
+    required RegisterRequest request,
   });
 }

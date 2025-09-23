@@ -232,7 +232,7 @@ class _SettingsViewState extends State<SettingsView> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'Người dùng',
+                  'John Doe',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -294,12 +294,12 @@ class _SettingsViewState extends State<SettingsView> {
 
   Widget _buildAppSettings() {
     return _buildSettingsSection(
-      title: 'Cài đặt ứng dụng',
+      title: 'App Settings',
       children: [
         _buildSwitchTile(
           icon: Icons.notifications,
-          title: 'Thông báo',
-          subtitle: 'Nhận thông báo về video mới',
+          title: 'Notifications',
+          subtitle: 'Receive notifications about new videos',
           value: _notifications,
           onChanged: (value) {
             setState(() {
@@ -313,12 +313,12 @@ class _SettingsViewState extends State<SettingsView> {
 
   Widget _buildVideoSettings() {
     return _buildSettingsSection(
-      title: 'Cài đặt video',
+      title: 'Video Settings',
       children: [
         _buildSwitchTile(
           icon: Icons.play_arrow,
-          title: 'Tự động phát',
-          subtitle: 'Tự động phát video tiếp theo',
+          title: 'Auto Play',
+          subtitle: 'Automatically play the next video',
           value: _autoPlay,
           onChanged: (value) {
             setState(() {
@@ -332,12 +332,12 @@ class _SettingsViewState extends State<SettingsView> {
 
   Widget _buildPrivacySettings() {
     return _buildSettingsSection(
-      title: 'Quyền riêng tư & Bảo mật',
+      title: 'Privacy & Security',
       children: [
         _buildSwitchTile(
           icon: Icons.history,
-          title: 'Lưu lịch sử tìm kiếm',
-          subtitle: 'Ghi nhớ các từ khóa đã tìm',
+          title: 'Save Search History',
+          subtitle: 'Remember searched keywords',
           value: _saveSearchHistory,
           onChanged: (value) {
             setState(() {
@@ -347,8 +347,8 @@ class _SettingsViewState extends State<SettingsView> {
         ),
         _buildActionTile(
           icon: Icons.delete_outline,
-          title: 'Xóa dữ liệu',
-          subtitle: 'Xóa lịch sử và cache',
+          title: 'Clear Data',
+          subtitle: 'Delete history and cache',
           onTap: () => _showClearDataDialog(),
         ),
       ],
@@ -357,29 +357,29 @@ class _SettingsViewState extends State<SettingsView> {
 
   Widget _buildAboutSettings() {
     return _buildSettingsSection(
-      title: 'Về ứng dụng',
+      title: 'About',
       children: [
         _buildActionTile(
           icon: Icons.help_outline,
-          title: 'Trợ giúp',
-          subtitle: 'Câu hỏi thường gặp và hướng dẫn',
+          title: 'Help',
+          subtitle: 'FAQs and guides',
           onTap: () => _showHelp(),
         ),
         _buildActionTile(
           icon: Icons.feedback,
-          title: 'Phản hồi',
-          subtitle: 'Gửi ý kiến đóng góp',
+          title: 'Feedback',
+          subtitle: 'Send your feedback',
           onTap: () => _showFeedback(),
         ),
         _buildActionTile(
           icon: Icons.star_outline,
-          title: 'Đánh giá ứng dụng',
-          subtitle: 'Đánh giá 5 sao trên Store',
+          title: 'Rate the App',
+          subtitle: 'Give us 5 stars on the Store',
           onTap: () => _rateApp(),
         ),
         _buildActionTile(
           icon: Icons.info_outline,
-          title: 'Thông tin phiên bản',
+          title: 'Version Info',
           subtitle: 'VideoSearch v1.0.0',
           onTap: () => _showAbout(),
         ),
@@ -474,7 +474,7 @@ class _SettingsViewState extends State<SettingsView> {
           Switch(
             value: value,
             onChanged: onChanged,
-            activeColor: const Color(0xFF0D9488),
+            activeThumbColor: const Color(0xFF0D9488),
             activeTrackColor: const Color(0xFF0D9488).withOpacity(0.3),
           ),
         ],
@@ -703,7 +703,7 @@ class _SettingsViewState extends State<SettingsView> {
           padding: const EdgeInsets.symmetric(vertical: 16),
         ),
         child: const Text(
-          'Đăng xuất',
+          'Log Out',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
@@ -720,9 +720,9 @@ class _SettingsViewState extends State<SettingsView> {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
-        title: const Text('Chỉnh sửa hồ sơ'),
-        content:
-            const Text('Tính năng chỉnh sửa hồ sơ sẽ có trong phiên bản tới.'),
+        title: const Text('Edit Profile'),
+        content: const Text(
+            'The edit profile feature will be available in the next version.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -740,27 +740,27 @@ class _SettingsViewState extends State<SettingsView> {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
-        title: const Text('Xóa dữ liệu'),
+        title: const Text('Clear Data'),
         content: const Text(
-          'Bạn có chắc chắn muốn xóa toàn bộ lịch sử tìm kiếm và dữ liệu cache? Hành động này không thể hoàn tác.',
+          'Are you sure you want to delete all search history and cached data? This action cannot be undone.',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Hủy'),
+            child: const Text('Cancel'),
           ),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
               AppDialogs.showSnackBar(
-                message: 'Đã xóa dữ liệu thành công',
+                message: 'Data cleared successfully',
                 backgroundColor: Colors.green,
               );
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFEF4444),
             ),
-            child: const Text('Xóa', style: TextStyle(color: Colors.white)),
+            child: const Text('Delete', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -775,7 +775,7 @@ class _SettingsViewState extends State<SettingsView> {
       context: context,
       builder: (dialogContext) => CustomAlertDialog(
         titleWidget: const Text(
-          'Đăng xuất',
+          'Log Out',
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
@@ -783,7 +783,7 @@ class _SettingsViewState extends State<SettingsView> {
           ),
         ),
         contentWidget: const Text(
-          'Bạn có chắc chắn muốn đăng xuất khỏi tài khoản?',
+          'Are you sure you want to log out of your account?',
           style: TextStyle(
             fontSize: 16,
             color: Color(0xFF6B7280),
@@ -791,24 +791,24 @@ class _SettingsViewState extends State<SettingsView> {
         ),
         hasCloseButton: true,
         hasOKButton: true,
-        closeButtonText: 'Hủy',
-        okButtonText: 'Đăng xuất',
+        closeButtonText: 'Cancel',
+        okButtonText: 'Log Out',
         okButtonColor: const Color(0xFFEF4444),
         onOKButtonPressed: () async {
-          // Đóng dialog bằng dialogContext
+          // Close dialog using dialogContext
           Navigator.of(dialogContext).pop();
 
           try {
             await settingsCubit.logout();
-            // Navigate to login và clear stack
+            // Navigate to login and clear stack
             router.replaceAll([const LoginRoute()]);
             AppDialogs.showSnackBar(
-              message: 'Đăng xuất thành công',
+              message: 'Logged out successfully',
               backgroundColor: Colors.green,
             );
           } catch (e) {
             AppDialogs.showSnackBar(
-              message: 'Lỗi đăng xuất: ${e.toString()}',
+              message: 'Logout error: ${e.toString()}',
               backgroundColor: Colors.redAccent,
             );
           }
@@ -819,21 +819,21 @@ class _SettingsViewState extends State<SettingsView> {
 
   void _showHelp() {
     AppDialogs.showSnackBar(
-      message: 'Đang mở trang trợ giúp...',
+      message: 'Opening help page...',
       backgroundColor: Colors.blueAccent,
     );
   }
 
   void _showFeedback() {
     AppDialogs.showSnackBar(
-      message: 'Đang mở form phản hồi...',
+      message: 'Opening feedback form...',
       backgroundColor: Colors.blueAccent,
     );
   }
 
   void _rateApp() {
     AppDialogs.showSnackBar(
-      message: 'Đang chuyển đến Store...',
+      message: 'Redirecting to Store...',
       backgroundColor: Colors.blueAccent,
     );
   }
@@ -850,9 +850,9 @@ class _SettingsViewState extends State<SettingsView> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Phiên bản: 1.0.0'),
+            Text('Version: 1.0.0'),
             SizedBox(height: 8),
-            Text('Phát triển bởi: VideoAI Team'),
+            Text('Developed by: VideoAI Team'),
             SizedBox(height: 8),
             Text('© 2024 VideoSearch. All rights reserved.'),
           ],

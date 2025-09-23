@@ -5,7 +5,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../common/dialogs/app_dialogs.dart';
 import '../../../app/app_router.dart';
-import '../../data/models/login_response.dart';
 import '../application/cubit/auth_cubit.dart';
 import '../application/cubit/auth_state.dart';
 
@@ -39,7 +38,7 @@ class _LoginViewState extends State<LoginView> {
   void initState() {
     super.initState();
 
-    // Thiết lập status bar
+    // Set up status bar
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
@@ -61,14 +60,14 @@ class _LoginViewState extends State<LoginView> {
     final email = _emailController.text.trim();
     if (email.isEmpty) {
       AppDialogs.showSnackBar(
-        message: 'Vui lòng nhập email',
+        message: 'Please enter your email',
         backgroundColor: Colors.red,
       );
       return;
     }
     if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(email)) {
       AppDialogs.showSnackBar(
-        message: 'Vui lòng nhập email hợp lệ',
+        message: 'Please enter a valid email',
         backgroundColor: Colors.red,
       );
       return;
@@ -76,7 +75,7 @@ class _LoginViewState extends State<LoginView> {
     final password = _passwordController.text.trim();
     if (password.isEmpty) {
       AppDialogs.showSnackBar(
-        message: 'Vui lòng nhập mật khẩu',
+        message: 'Please enter your password',
         backgroundColor: Colors.red,
       );
       return;
@@ -92,12 +91,12 @@ class _LoginViewState extends State<LoginView> {
       body: SafeArea(
         child: BlocListener<AuthCubit, AuthState>(
           listener: (context, state) {
-            state.when(
+            state.maybeWhen(
               initial: () {},
               loading: () {},
               loginSuccess: (loginResponse) {
                 AppDialogs.showSnackBar(
-                  message: 'Đăng nhập thành công! Chào mừng quay trở lại',
+                  message: 'Login successful! Welcome back',
                   backgroundColor: Colors.green,
                 );
                 // Navigate to home screen
@@ -110,10 +109,10 @@ class _LoginViewState extends State<LoginView> {
                 );
               },
               validationError: (apiError) {
-                // Hiển thị validation errors
+                // Show validation errors
                 final errors = apiError.validationErrors;
                 if (errors.isNotEmpty) {
-                  // Hiển thị error đầu tiên hoặc tổng hợp
+                  // Display the first or summary of errors
                   String errorMessage =
                       errors.map((e) => '${e.field}: ${e.message}').join('\n');
                   AppDialogs.showSnackBar(
@@ -122,6 +121,7 @@ class _LoginViewState extends State<LoginView> {
                   );
                 }
               },
+              orElse: () {},
             );
           },
           child: SingleChildScrollView(
@@ -135,11 +135,11 @@ class _LoginViewState extends State<LoginView> {
                   children: [
                     const SizedBox(height: 60),
 
-                    // Logo và tiêu đề chính
+                    // Logo and main title
                     Center(
                       child: Column(
                         children: [
-                          // Logo VideoAI
+                          // VideoAI Logo
                           Container(
                             width: 60,
                             height: 60,
@@ -169,7 +169,7 @@ class _LoginViewState extends State<LoginView> {
 
                           // Subtitle
                           const Text(
-                            'Đăng nhập vào tài khoản của bạn',
+                            'Login to your account',
                             style: TextStyle(
                               fontSize: 16,
                               color: Color(0xFF6B7280),
@@ -182,7 +182,7 @@ class _LoginViewState extends State<LoginView> {
 
                     const SizedBox(height: 48),
 
-                    // Card đăng nhập
+                    // Login Card
                     Container(
                       padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
@@ -198,9 +198,9 @@ class _LoginViewState extends State<LoginView> {
                           return Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // Tiêu đề đăng nhập
+                              // Login title
                               const Text(
-                                'Đăng Nhập',
+                                'Login',
                                 style: TextStyle(
                                   fontSize: 24,
                                   fontWeight: FontWeight.bold,
@@ -209,7 +209,7 @@ class _LoginViewState extends State<LoginView> {
                               ),
                               const SizedBox(height: 8),
                               const Text(
-                                'Nhập thông tin để truy cập hệ thống',
+                                'Enter your information to access the system',
                                 style: TextStyle(
                                   fontSize: 14,
                                   color: Color(0xFF6B7280),
@@ -258,7 +258,7 @@ class _LoginViewState extends State<LoginView> {
 
                               // Password field
                               const Text(
-                                'Mật khẩu',
+                                'Password',
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
@@ -301,7 +301,7 @@ class _LoginViewState extends State<LoginView> {
                                     // Handle forgot password
                                   },
                                   child: const Text(
-                                    'Quên mật khẩu?',
+                                    'Forgot password?',
                                     style: TextStyle(
                                       fontSize: 14,
                                       color: Color(0xFF0D9488),
@@ -318,12 +318,9 @@ class _LoginViewState extends State<LoginView> {
                                 width: double.infinity,
                                 height: 52,
                                 child: ElevatedButton(
-                                  onPressed: state.when(
+                                  onPressed: state.maybeWhen(
                                     loading: () => null,
-                                    initial: () => _handleLogin,
-                                    loginSuccess: (_) => _handleLogin,
-                                    error: (_) => _handleLogin,
-                                    validationError: (_) => _handleLogin,
+                                    orElse: () => _handleLogin,
                                   ),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: const Color(0xFF0D9488),
@@ -336,7 +333,7 @@ class _LoginViewState extends State<LoginView> {
                                         const Color(0xFF0D9488)
                                             .withOpacity(0.6),
                                   ),
-                                  child: state.when(
+                                  child: state.maybeWhen(
                                     loading: () => const SizedBox(
                                       height: 20,
                                       width: 20,
@@ -347,37 +344,13 @@ class _LoginViewState extends State<LoginView> {
                                                 Colors.white),
                                       ),
                                     ),
-                                    initial: () => const Text(
-                                      'Đăng Nhập',
+                                    orElse: () => const Text(
+                                      'Login',
                                       style: TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.w600,
                                       ),
                                     ),
-                                    error: (_) => const Text(
-                                      'Đăng Nhập',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                    validationError: (_) => const Text(
-                                      'Đăng Nhập',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                    loginSuccess:
-                                        (LoginResponse loginResponse) {
-                                      return const Text(
-                                        'Đăng Nhập',
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      );
-                                    },
                                   ),
                                 ),
                               ),
@@ -395,7 +368,7 @@ class _LoginViewState extends State<LoginView> {
                         alignment: WrapAlignment.center,
                         children: [
                           const Text(
-                            'Chưa có tài khoản? ',
+                            'Don\'t have an account? ',
                             style: TextStyle(
                               fontSize: 14,
                               color: Color(0xFF6B7280),
@@ -404,10 +377,10 @@ class _LoginViewState extends State<LoginView> {
                           GestureDetector(
                             onTap: () {
                               HapticFeedback.lightImpact();
-                              // Handle register
+                              context.router.push(const RegisterRoute());
                             },
                             child: const Text(
-                              'Đăng ký ngay',
+                              'Sign up now',
                               style: TextStyle(
                                 fontSize: 14,
                                 color: Color(0xFF0D9488),
