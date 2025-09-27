@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../../../../../core/data/remote/base/api_error.dart';
@@ -10,7 +11,7 @@ part 'auth_state.freezed.dart';
 class AuthState with _$AuthState {
   const factory AuthState.initial() = _Initial;
   const factory AuthState.loading() = _Loading;
-  const factory AuthState.loadingRegister() = _LoadingRegister;
+  const factory AuthState.loadingSendOtp() = _LoadingSendOtp;
   const factory AuthState.loginSuccess(LoginResponse loginResponse) =
       _LoginSuccess;
   const factory AuthState.error(String message) = _Error;
@@ -20,4 +21,6 @@ class AuthState with _$AuthState {
       _SendOtpSuccess;
   const factory AuthState.registerSuccess(StatusApiResponse registerResponse) =
       _RegisterSuccess;
+  const factory AuthState.resetPasswordSuccess(
+      StatusApiResponse resetPasswordResponse) = _ResetPasswordSuccess;
 }

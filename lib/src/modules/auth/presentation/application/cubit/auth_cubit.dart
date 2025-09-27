@@ -2,6 +2,7 @@ import 'package:bloc/bloc.dart';
 import 'package:injectable/injectable.dart';
 
 import '../../../data/models/register_request.dart';
+import '../../../data/models/reset_password_request.dart';
 import '../../../domain/repository/auth_repository.dart';
 import 'auth_state.dart';
 
@@ -98,7 +99,7 @@ class AuthCubit extends Cubit<AuthState> {
     required String email,
     String type = 'REGISTER',
   }) async {
-    emit(const AuthState.loading());
+    emit(const AuthState.loadingSendOtp());
 
     final result = await _authRepository.sendOtp(
       email: email,
@@ -108,6 +109,41 @@ class AuthCubit extends Cubit<AuthState> {
     result.fold(
       (sendOtpResponse) {
         emit(AuthState.sendOtpSuccess(sendOtpResponse));
+      },
+      (error) {
+        // Sử dụng pattern matching để check validation error
+        error.maybeWhen(
+          (code, message) => emit(AuthState.error(error.message)),
+          validation: (statusCode, errors) {
+            emit(AuthState.validationError(error));
+          },
+          orElse: () {
+            emit(AuthState.error(error.message));
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> resetPassword(
+      {required String newPassword,
+      required String otpCode,
+      required String newPasswordConfirm,
+      required String email}) async {
+    emit(const AuthState.loading());
+
+    final request = ResetPasswordRequest(
+      newPassword: newPassword,
+      otpCode: otpCode,
+      confirmNewPassword: newPasswordConfirm,
+      email: email,
+    );
+
+    final result = await _authRepository.resetPassword(request);
+
+    result.fold(
+      (resetPasswordResponse) {
+        emit(AuthState.resetPasswordSuccess(resetPasswordResponse));
       },
       (error) {
         // Sử dụng pattern matching để check validation error

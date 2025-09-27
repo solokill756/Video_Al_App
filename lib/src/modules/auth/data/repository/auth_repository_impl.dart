@@ -8,6 +8,7 @@ import '../../../../core/data/local/storage.dart';
 import '../models/login_request.dart';
 import '../models/login_response.dart';
 import '../models/register_request.dart';
+import '../models/reset_password_request.dart';
 import '../models/send_otp_request.dart';
 import '../remote/auth_api_service.dart';
 import '../../domain/repository/auth_repository.dart';
@@ -83,6 +84,14 @@ class AuthRepositoryImpl implements AuthRepository {
     final request = SendOtpRequest(email: email, type: type);
     return await _authApiService
         .sendOtp(request)
+        .tryGet((response) => response);
+  }
+
+  @override
+  Future<Result<StatusApiResponse, ApiError>> resetPassword(
+      ResetPasswordRequest request) async {
+    return await _authApiService
+        .resetPassword(request)
         .tryGet((response) => response);
   }
 }

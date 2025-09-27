@@ -6,6 +6,7 @@ import '../../../../core/data/remote/base/api_response.dart';
 import '../models/login_request.dart';
 import '../models/login_response.dart';
 import '../models/register_request.dart';
+import '../models/reset_password_request.dart';
 import '../models/send_otp_request.dart';
 
 @injectable
@@ -73,21 +74,6 @@ class AuthApiService {
     return StatusApiResponse.fromJson(response.data);
   }
 
-  /// Reset password với token từ email
-  Future<StatusApiResponse> resetPassword({
-    required String token,
-    required String newPassword,
-  }) async {
-    final response = await _dio.post(
-      '/auth/reset-password',
-      data: {
-        'token': token,
-        'password': newPassword,
-      },
-    );
-    return StatusApiResponse.fromJson(response.data);
-  }
-
   /// Change password cho user đã login
   /// Cần Authorization header
   Future<StatusApiResponse> changePassword({
@@ -131,6 +117,21 @@ class AuthApiService {
     final message =
         responseData['message'] as String? ?? 'OTP sent successfully';
 
+    return StatusApiResponse(
+      message: message,
+      statusCode: response.statusCode!,
+    );
+  }
+
+  // Reset password với OTP
+  Future<StatusApiResponse> resetPassword(ResetPasswordRequest request) async {
+    final response = await _dio.post(
+      '/auth/forgot-password',
+      data: request.toJson(),
+    );
+    final responseData = response.data as Map<String, dynamic>;
+    final message =
+        responseData['message'] as String? ?? 'Password reset successfully';
     return StatusApiResponse(
       message: message,
       statusCode: response.statusCode!,
