@@ -4,6 +4,8 @@ import 'package:injectable/injectable.dart';
 
 import '../../common/guards/auth_guard.dart';
 import '../Settings/presentation/pages/settings_page.dart';
+import '../auth/presentation/pages/forgot_password_detail_page.dart';
+import '../auth/presentation/pages/forgot_password_page.dart';
 import '../auth/presentation/pages/login_page.dart';
 import '../auth/presentation/pages/register_page.dart';
 import '../auth/presentation/pages/register_detail_page.dart';
@@ -26,5 +28,12 @@ class AppRouter extends _$AppRouter {
         AutoRoute(page: RegisterDetailRoute.page, path: '/register-detail'),
         AutoRoute(
             page: SettingsRoute.page, path: '/settings', guards: [_authGuard]),
+        AutoRoute(
+          page: ForgotPasswordRoute.page,
+          path: '/forgot-password',
+        ),
+        AutoRoute(
+            page: ForgotPasswordDetailRoute.page,
+            path: '/forgot-password-detail'),
       ];
 }

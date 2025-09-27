@@ -10,42 +10,39 @@ import '../application/cubit/auth_cubit.dart';
 import '../application/cubit/auth_state.dart';
 
 @RoutePage()
-class RegisterDetailPage extends StatelessWidget {
+class ForgotPasswordDetailPage extends StatelessWidget {
   final String email;
 
-  const RegisterDetailPage({
+  const ForgotPasswordDetailPage({
     super.key,
     required this.email,
   });
 
   @override
   Widget build(BuildContext context) {
-    return RegisterDetailView(email: email);
+    return ForgotPasswordDetailView(email: email);
   }
 }
 
-class RegisterDetailView extends StatefulWidget {
+class ForgotPasswordDetailView extends StatefulWidget {
   final String email;
 
-  const RegisterDetailView({
+  const ForgotPasswordDetailView({
     super.key,
     required this.email,
   });
 
   @override
-  State<RegisterDetailView> createState() => _RegisterDetailViewState();
+  State<ForgotPasswordDetailView> createState() =>
+      _ForgotPasswordDetailViewState();
 }
 
-class _RegisterDetailViewState extends State<RegisterDetailView> {
+class _ForgotPasswordDetailViewState extends State<ForgotPasswordDetailView> {
   final TextEditingController _otpController = TextEditingController();
-  final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController =
       TextEditingController();
   final FocusNode _otpFocus = FocusNode();
-  final FocusNode _nameFocus = FocusNode();
-  final FocusNode _phoneFocus = FocusNode();
   final FocusNode _passwordFocus = FocusNode();
   final FocusNode _confirmPasswordFocus = FocusNode();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
@@ -69,25 +66,20 @@ class _RegisterDetailViewState extends State<RegisterDetailView> {
   @override
   void dispose() {
     _otpController.dispose();
-    _nameController.dispose();
-    _phoneController.dispose();
+
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     _otpFocus.dispose();
-    _nameFocus.dispose();
-    _phoneFocus.dispose();
     _passwordFocus.dispose();
     _confirmPasswordFocus.dispose();
     super.dispose();
   }
 
-  void _handleRegister() async {
+  void _handleResetPassword() async {
     // Tắt bàn phím ảo
     FocusScope.of(context).unfocus();
 
     final otp = _otpController.text.trim();
-    final name = _nameController.text.trim();
-    final phone = _phoneController.text.trim();
     final password = _passwordController.text.trim();
     final confirmPassword = _confirmPasswordController.text.trim();
 
@@ -102,30 +94,6 @@ class _RegisterDetailViewState extends State<RegisterDetailView> {
     if (otp.length != 6) {
       AppDialogs.showSnackBar(
         message: 'OTP code must be 6 digits',
-        backgroundColor: Colors.red,
-      );
-      return;
-    }
-
-    if (name.isEmpty) {
-      AppDialogs.showSnackBar(
-        message: 'Please enter your full name',
-        backgroundColor: Colors.red,
-      );
-      return;
-    }
-
-    if (phone.isEmpty) {
-      AppDialogs.showSnackBar(
-        message: 'Please enter phone number',
-        backgroundColor: Colors.red,
-      );
-      return;
-    }
-
-    if (phone.length != 10) {
-      AppDialogs.showSnackBar(
-        message: 'Invalid phone number',
         backgroundColor: Colors.red,
       );
       return;
@@ -146,14 +114,11 @@ class _RegisterDetailViewState extends State<RegisterDetailView> {
       );
       return;
     }
-
-    context.read<AuthCubit>().register(
+    context.read<AuthCubit>().resetPassword(
           email: widget.email,
-          password: password,
-          name: name,
-          phoneNumber: phone,
           otpCode: otp,
-          confirmPassword: confirmPassword,
+          newPassword: password,
+          newPasswordConfirm: confirmPassword,
         );
   }
 
@@ -190,9 +155,9 @@ class _RegisterDetailViewState extends State<RegisterDetailView> {
       body: BlocListener<AuthCubit, AuthState>(
         listener: (context, state) {
           state.maybeWhen(
-            registerSuccess: (registerResponse) {
+            resetPasswordSuccess: (resetResponse) {
               AppDialogs.showSnackBar(
-                message: registerResponse.message,
+                message: resetResponse.message,
                 backgroundColor: Colors.green,
               );
               context.router.replaceAll([const LoginRoute()]);
@@ -237,7 +202,7 @@ class _RegisterDetailViewState extends State<RegisterDetailView> {
                         children: [
                           // Title
                           const Text(
-                            'Complete Registration',
+                            'Complete Change Password',
                             style: TextStyle(
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
@@ -250,7 +215,7 @@ class _RegisterDetailViewState extends State<RegisterDetailView> {
 
                           // Subtitle
                           const Text(
-                            'Please fill in the details below to create your account',
+                            'Please enter the OTP code sent to your email and set your new password.',
                             style: TextStyle(
                               fontSize: 14,
                               color: Color(0xFF6B7280),
@@ -345,7 +310,7 @@ class _RegisterDetailViewState extends State<RegisterDetailView> {
                                         ),
                                       ),
                                       orElse: () => const Text(
-                                        'Gửi lại',
+                                        'Resend',
                                         style: TextStyle(
                                           fontSize: 14,
                                           fontWeight: FontWeight.w600,
@@ -355,54 +320,6 @@ class _RegisterDetailViewState extends State<RegisterDetailView> {
                                   ),
                                 ],
                               );
-                            },
-                          ),
-
-                          const SizedBox(height: 20),
-
-                          // Name field
-                          const Text(
-                            'Full Name',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF374151),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          _buildTextField(
-                            controller: _nameController,
-                            focusNode: _nameFocus,
-                            hintText: 'Enter your full name',
-                            prefixIcon: Icons.person_outlined,
-                            textInputAction: TextInputAction.next,
-                            onSubmitted: (_) {
-                              FocusScope.of(context).requestFocus(_phoneFocus);
-                            },
-                          ),
-
-                          const SizedBox(height: 20),
-
-                          // Phone field
-                          const Text(
-                            'Phone Number',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF374151),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          _buildTextField(
-                            controller: _phoneController,
-                            focusNode: _phoneFocus,
-                            hintText: 'Enter phone number',
-                            prefixIcon: Icons.phone_outlined,
-                            keyboardType: TextInputType.phone,
-                            textInputAction: TextInputAction.next,
-                            onSubmitted: (_) {
-                              FocusScope.of(context)
-                                  .requestFocus(_passwordFocus);
                             },
                           ),
 
@@ -421,7 +338,7 @@ class _RegisterDetailViewState extends State<RegisterDetailView> {
                           _buildTextField(
                             controller: _passwordController,
                             focusNode: _passwordFocus,
-                            hintText: 'Enter password',
+                            hintText: 'Enter new password',
                             prefixIcon: Icons.lock_outlined,
                             isPassword: true,
                             obscureText: _obscurePassword,
@@ -441,7 +358,7 @@ class _RegisterDetailViewState extends State<RegisterDetailView> {
 
                           // Confirm Password field
                           const Text(
-                            'Confirm Password',
+                            'Confirm new Password',
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
@@ -457,7 +374,6 @@ class _RegisterDetailViewState extends State<RegisterDetailView> {
                             isPassword: true,
                             obscureText: _obscureConfirmPassword,
                             textInputAction: TextInputAction.done,
-                            onSubmitted: (_) => _handleRegister(),
                             onToggleObscure: () {
                               setState(() {
                                 _obscureConfirmPassword =
@@ -478,8 +394,8 @@ class _RegisterDetailViewState extends State<RegisterDetailView> {
 
                               return LoadingButton(
                                 isLoading: isLoading,
-                                onPressed: _handleRegister,
-                                text: 'Complete Registration',
+                                onPressed: _handleResetPassword,
+                                text: 'Change passwords',
                                 loadingText: 'Processing...',
                               );
                             },
@@ -493,7 +409,7 @@ class _RegisterDetailViewState extends State<RegisterDetailView> {
                               alignment: WrapAlignment.center,
                               children: [
                                 const Text(
-                                  'Already have an account? ',
+                                  'Remember password? ',
                                   style: TextStyle(
                                     fontSize: 14,
                                     color: Color(0xFF6B7280),
@@ -550,7 +466,7 @@ class _RegisterDetailViewState extends State<RegisterDetailView> {
         maxLength: 6,
         textInputAction: TextInputAction.next,
         onSubmitted: (_) {
-          FocusScope.of(context).requestFocus(_nameFocus);
+          FocusScope.of(context).requestFocus(_passwordFocus);
         },
         style: const TextStyle(
           fontSize: 20,

@@ -4,6 +4,7 @@ import 'package:result_dart/result_dart.dart';
 import '../../../../core/data/remote/base/api_error.dart';
 import '../../../../core/data/remote/base/api_response.dart';
 import '../../data/models/login_response.dart';
+import '../../data/models/reset_password_request.dart';
 
 abstract class AuthRepository {
   Future<Result<LoginResponse, ApiError>> login({
@@ -21,4 +22,7 @@ abstract class AuthRepository {
   Future<Result<StatusApiResponse, ApiError>> register({
     required RegisterRequest request,
   });
+
+  Future<Result<StatusApiResponse, ApiError>> resetPassword(
+      ResetPasswordRequest request);
 }

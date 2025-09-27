@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../common/dialogs/app_dialogs.dart';
+import '../../../../common/widgets/loading_widget.dart';
 import '../../../app/app_router.dart';
 import '../application/cubit/auth_cubit.dart';
 import '../application/cubit/auth_state.dart';
@@ -57,6 +58,7 @@ class _LoginViewState extends State<LoginView> {
   }
 
   void _handleLogin() async {
+    FocusScope.of(context).unfocus();
     final email = _emailController.text.trim();
     if (email.isEmpty) {
       AppDialogs.showSnackBar(
@@ -285,7 +287,6 @@ class _LoginViewState extends State<LoginView> {
                                     isPassword: true,
                                     textInputAction: TextInputAction.done,
                                     errorText: passwordError,
-                                    onSubmitted: (_) => _handleLogin(),
                                   );
                                 },
                               ),
@@ -298,7 +299,8 @@ class _LoginViewState extends State<LoginView> {
                                 child: GestureDetector(
                                   onTap: () {
                                     HapticFeedback.lightImpact();
-                                    // Handle forgot password
+                                    context.router
+                                        .push(const ForgotPasswordRoute());
                                   },
                                   child: const Text(
                                     'Forgot password?',
@@ -317,41 +319,16 @@ class _LoginViewState extends State<LoginView> {
                               SizedBox(
                                 width: double.infinity,
                                 height: 52,
-                                child: ElevatedButton(
+                                child: LoadingButton(
+                                  isLoading: state.maybeWhen(
+                                      loading: () => true, orElse: () => false),
                                   onPressed: state.maybeWhen(
-                                    loading: () => null,
-                                    orElse: () => _handleLogin,
-                                  ),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFF0D9488),
-                                    foregroundColor: Colors.white,
-                                    elevation: 0,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    disabledBackgroundColor:
-                                        const Color(0xFF0D9488)
-                                            .withOpacity(0.6),
-                                  ),
-                                  child: state.maybeWhen(
-                                    loading: () => const SizedBox(
-                                      height: 20,
-                                      width: 20,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        valueColor:
-                                            AlwaysStoppedAnimation<Color>(
-                                                Colors.white),
-                                      ),
-                                    ),
-                                    orElse: () => const Text(
-                                      'Login',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ),
+                                      loading: () => null,
+                                      orElse: () => _handleLogin),
+                                  text: 'Login',
+                                  loadingText: 'Logging in...',
+                                  backgroundColor: const Color(0xFF0D9488),
+                                  borderRadius: 12,
                                 ),
                               ),
                             ],

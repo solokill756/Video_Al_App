@@ -1,41 +1,38 @@
 import 'package:auto_route/auto_route.dart';
-import 'package:dmvgenie/src/modules/auth/presentation/application/cubit/auth_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../common/dialogs/app_dialogs.dart';
-import '../../../../common/widgets/widgets.dart';
+import '../../../../common/widgets/loading_widget.dart';
 import '../../../app/app_router.dart';
+import '../application/cubit/auth_cubit.dart';
 import '../application/cubit/auth_state.dart';
 
 @RoutePage()
-class RegisterPage extends StatelessWidget {
-  const RegisterPage({super.key});
-
+class ForgotPasswordPage extends StatelessWidget {
+  const ForgotPasswordPage({super.key});
   @override
   Widget build(BuildContext context) {
-    return const RegisterView();
+    return ForgotPasswordView();
   }
 }
 
-class RegisterView extends StatefulWidget {
-  const RegisterView({super.key});
+class ForgotPasswordView extends StatefulWidget {
+  const ForgotPasswordView({super.key});
 
   @override
-  State<RegisterView> createState() => _RegisterViewState();
+  State<ForgotPasswordView> createState() => _ForgotPasswordViewState();
 }
 
-class _RegisterViewState extends State<RegisterView> {
+class _ForgotPasswordViewState extends State<ForgotPasswordView> {
   final TextEditingController _emailController = TextEditingController();
   final FocusNode _emailFocus = FocusNode();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-
   @override
   void initState() {
     super.initState();
-
-    // Set up status bar
+    _emailController.text = '';
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
@@ -70,14 +67,7 @@ class _RegisterViewState extends State<RegisterView> {
       );
       return;
     }
-    context.read<AuthCubit>().sendOtp(email: email, type: 'REGISTER');
-  }
-
-  void _handleGoogleSignIn() {
-    AppDialogs.showSnackBar(
-      message: 'Google login feature is under development',
-      backgroundColor: Colors.blue,
-    );
+    context.read<AuthCubit>().sendOtp(email: email, type: 'FORGOT_PASSWORD');
   }
 
   @override
@@ -92,8 +82,8 @@ class _RegisterViewState extends State<RegisterView> {
                 message: response.message,
                 backgroundColor: Colors.green,
               );
-              context.router.push(
-                  RegisterDetailRoute(email: _emailController.text.trim()));
+              context.router.push(ForgotPasswordDetailRoute(
+                  email: _emailController.text.trim()));
             },
             error: (message) {
               AppDialogs.showSnackBar(
@@ -135,7 +125,7 @@ class _RegisterViewState extends State<RegisterView> {
                         children: [
                           // Title
                           const Text(
-                            'Create Account',
+                            'Forgot Password',
                             style: TextStyle(
                               fontSize: 28,
                               fontWeight: FontWeight.bold,
@@ -148,7 +138,7 @@ class _RegisterViewState extends State<RegisterView> {
 
                           // Subtitle
                           const Text(
-                            'Enter email to begin registration',
+                            'Enter email to reset your password',
                             style: TextStyle(
                               fontSize: 16,
                               color: Color(0xFF6B7280),
@@ -226,60 +216,13 @@ class _RegisterViewState extends State<RegisterView> {
 
                           const SizedBox(height: 24),
 
-                          // Google sign in button
-                          SizedBox(
-                            height: 52,
-                            child: OutlinedButton(
-                              onPressed: _handleGoogleSignIn,
-                              style: OutlinedButton.styleFrom(
-                                backgroundColor: Colors.white,
-                                foregroundColor: const Color(0xFF374151),
-                                side: BorderSide(
-                                  color: Colors.grey.shade300,
-                                  width: 1,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  // Google icon
-                                  Container(
-                                    width: 20,
-                                    height: 20,
-                                    decoration: const BoxDecoration(
-                                      image: DecorationImage(
-                                        image: NetworkImage(
-                                          'https://developers.google.com/identity/images/g-logo.png',
-                                        ),
-                                        fit: BoxFit.contain,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  const Text(
-                                    'Sign in with Google',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-
-                          const SizedBox(height: 32),
-
                           // Login link
                           Center(
                             child: Wrap(
                               alignment: WrapAlignment.center,
                               children: [
                                 const Text(
-                                  'Already have an account? ',
+                                  'Remember your Password?',
                                   style: TextStyle(
                                     fontSize: 14,
                                     color: Color(0xFF6B7280),
