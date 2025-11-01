@@ -2,6 +2,8 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 
+import '../../../../common/utils/getit_utils.dart';
+import '../../../../modules/app/app_router.dart';
 import '../../local/storage.dart';
 
 /// Auth interceptor to handle authentication headers and token refresh
@@ -148,8 +150,8 @@ class AuthInterceptor extends Interceptor {
     await Storage.removeAccessToken();
     await Storage.removeRefreshToken();
 
-    // TODO: Add navigation to login screen
-    // You can use GetIt to get router service or use a callback
+    final router = getIt<AppRouter>();
+    router.replaceAll([const LoginRoute()]);
     print('AuthInterceptor: Tokens cleared, should redirect to login');
   }
 }

@@ -1,75 +1,84 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-/// Widget loading dùng chung cho toàn bộ app
+// --- ENUM VÀ CÁC WIDGET PUBLIC ---
+
+/// Các kiểu loading animation khác nhau.
+enum LoadingType { circular, dots, pulse, spinner, wave, gear }
+
+/// Widget loading dùng chung, linh hoạt và có thể tùy chỉnh cho toàn bộ ứng dụng.
+///
+/// Widget này chỉ chịu trách nhiệm hiển thị animation và tin nhắn.
+/// Nó không bao gồm nền mờ hay hộp chứa màu trắng.
 class LoadingWidget extends StatelessWidget {
+  /// Tin nhắn hiển thị bên dưới animation.
   final String? message;
+
+  /// Kích thước của animation.
   final double? size;
+
+  /// Màu sắc của animation.
   final Color? color;
-  final bool showBackground;
-  final Color? backgroundColor;
+
+  /// Kiểu animation để hiển thị.
+  final LoadingType type;
 
   const LoadingWidget({
     super.key,
     this.message,
     this.size,
     this.color,
-    this.showBackground = true,
-    this.backgroundColor,
+    this.type = LoadingType.circular,
   });
 
-  /// Loading indicator nhỏ cho button
+  /// Constructor tiện lợi cho loading indicator nhỏ, thường dùng trong button.
   const LoadingWidget.small({
     super.key,
     this.message,
     this.color,
-    this.showBackground = false,
-    this.backgroundColor,
+    this.type = LoadingType.circular,
   }) : size = 20;
 
-  /// Loading indicator trung bình
+  /// Constructor tiện lợi cho loading indicator trung bình.
   const LoadingWidget.medium({
     super.key,
     this.message,
     this.color,
-    this.showBackground = true,
-    this.backgroundColor,
+    this.type = LoadingType.dots,
   }) : size = 32;
 
-  /// Loading indicator lớn cho toàn màn hình
+  /// Constructor tiện lợi cho loading indicator lớn, thường dùng cho toàn màn hình.
   const LoadingWidget.large({
     super.key,
     this.message,
     this.color,
-    this.showBackground = true,
-    this.backgroundColor,
+    this.type = LoadingType.pulse,
   }) : size = 48;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final effectiveColor = color ?? theme.primaryColor;
-    final effectiveSize = size ?? 32.0;
+    final effectiveColor = color ?? Theme.of(context).primaryColor;
+    final effectiveSize = (size ?? 32.0).w;
 
-    Widget loadingIndicator = SizedBox(
-      width: effectiveSize,
-      height: effectiveSize,
-      child: CircularProgressIndicator(
-        strokeWidth: effectiveSize * 0.08,
-        valueColor: AlwaysStoppedAnimation<Color>(effectiveColor),
-      ),
+    Widget loadingIndicator = _buildLoadingByType(
+      effectiveColor,
+      effectiveSize,
     );
 
-    if (message != null) {
-      loadingIndicator = Column(
+    // Nếu có tin nhắn, bọc animation trong một Column
+    if (message != null && message!.isNotEmpty) {
+      return Column(
         mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           loadingIndicator,
-          SizedBox(height: effectiveSize * 0.5),
+          SizedBox(height: 16.h),
           Text(
             message!,
             style: TextStyle(
-              fontSize: effectiveSize * 0.35,
-              color: Colors.grey.shade600,
+              fontSize: 14.sp,
+              color: Colors.grey.shade700,
               fontWeight: FontWeight.w500,
             ),
             textAlign: TextAlign.center,
@@ -78,67 +87,35 @@ class LoadingWidget extends StatelessWidget {
       );
     }
 
-    if (!showBackground) {
-      return loadingIndicator;
-    }
-
-    return Container(
-      color: backgroundColor ?? Colors.black.withOpacity(0.3),
-      child: Center(
-        child: Container(
-          padding: EdgeInsets.all(effectiveSize * 0.75),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 10,
-                offset: const Offset(0, 5),
-              ),
-            ],
-          ),
-          child: loadingIndicator,
-        ),
-      ),
-    );
-  }
-}
-
-/// Extension để hiển thị loading dialog
-extension LoadingDialog on BuildContext {
-  /// Hiển thị loading dialog
-  void showLoadingDialog({
-    String? message,
-    bool barrierDismissible = false,
-  }) {
-    showDialog(
-      context: this,
-      barrierDismissible: barrierDismissible,
-      builder: (context) => WillPopScope(
-        onWillPop: () async => barrierDismissible,
-        child: LoadingWidget.medium(
-          message: message,
-          showBackground: false,
-        ),
-      ),
-    );
+    return loadingIndicator;
   }
 
-  /// Ẩn loading dialog
-  void hideLoadingDialog() {
-    if (Navigator.canPop(this)) {
-      Navigator.pop(this);
+  /// Xây dựng widget animation dựa trên `LoadingType`.
+  Widget _buildLoadingByType(Color color, double size) {
+    switch (type) {
+      case LoadingType.circular:
+        return _CircularLoader(color: color, size: size);
+      case LoadingType.dots:
+        return _DotsLoader(color: color, size: size);
+      case LoadingType.pulse:
+        return _PulseLoader(color: color, size: size);
+      case LoadingType.spinner:
+        return _SpinnerLoader(color: color, size: size);
+      case LoadingType.wave:
+        return _WaveLoader(color: color, size: size);
+      case LoadingType.gear:
+        return _GearLoader(color: color, size: size);
     }
   }
 }
 
-/// Widget overlay loading cho toàn màn hình
+/// Một lớp phủ (overlay) hiển thị loading trên toàn bộ một widget con.
 class LoadingOverlay extends StatelessWidget {
   final bool isLoading;
   final Widget child;
   final String? message;
   final Color? backgroundColor;
+  final LoadingType loadingType;
 
   const LoadingOverlay({
     super.key,
@@ -146,6 +123,7 @@ class LoadingOverlay extends StatelessWidget {
     required this.child,
     this.message,
     this.backgroundColor,
+    this.loadingType = LoadingType.pulse,
   });
 
   @override
@@ -154,26 +132,27 @@ class LoadingOverlay extends StatelessWidget {
       children: [
         child,
         if (isLoading)
-          LoadingWidget.large(
-            message: message,
-            backgroundColor: backgroundColor,
+          Container(
+            color: backgroundColor ?? Colors.black.withOpacity(0.4),
+            child: Center(
+              child: LoadingWidget.large(message: message, type: loadingType),
+            ),
           ),
       ],
     );
   }
 }
 
-/// Loading widget cho button với custom design
+/// Button có trạng thái loading tích hợp.
 class LoadingButton extends StatelessWidget {
   final bool isLoading;
   final VoidCallback? onPressed;
   final String text;
   final String? loadingText;
+  final ButtonStyle? style;
+  final LoadingType loadingType;
   final Color? backgroundColor;
-  final Color? foregroundColor;
-  final double height;
-  final double borderRadius;
-  final EdgeInsetsGeometry? padding;
+  final Color? textColor;
 
   const LoadingButton({
     super.key,
@@ -181,96 +160,160 @@ class LoadingButton extends StatelessWidget {
     required this.onPressed,
     required this.text,
     this.loadingText,
-    this.backgroundColor,
-    this.foregroundColor,
-    this.height = 52,
-    this.borderRadius = 12,
-    this.padding,
+    this.style,
+    this.loadingType = LoadingType.circular,
+    this.backgroundColor = const Color(0xFF0D9488),
+    this.textColor = Colors.white,
   });
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      height: height,
-      child: ElevatedButton(
-        onPressed: isLoading ? null : onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: backgroundColor ?? const Color(0xFF0D9488),
-          foregroundColor: foregroundColor ?? Colors.white,
-          elevation: 0,
+    final buttonStyle = style ??
+        ElevatedButton.styleFrom(
+          backgroundColor: backgroundColor,
+          foregroundColor: textColor,
+          minimumSize: Size.fromHeight(52.h),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(borderRadius),
+            borderRadius: BorderRadius.circular(12.r),
           ),
-          disabledBackgroundColor:
-              (backgroundColor ?? const Color(0xFF0D9488)).withOpacity(0.6),
-          padding: padding,
-        ),
+          textStyle: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w600),
+        );
+
+    return ElevatedButton(
+      onPressed: isLoading ? null : onPressed,
+      style: buttonStyle,
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 250),
+        transitionBuilder: (child, animation) {
+          return FadeTransition(opacity: animation, child: child);
+        },
         child: isLoading
             ? Row(
+                key: const ValueKey('loading_btn'),
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const LoadingWidget.small(
-                    color: Colors.white,
-                    showBackground: false,
+                  LoadingWidget.small(
+                    color: buttonStyle.foregroundColor?.resolve({}) ??
+                        Colors.white,
+                    type: loadingType,
                   ),
-                  if (loadingText != null) ...[
-                    const SizedBox(width: 12),
-                    Text(
-                      loadingText!,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                  if (loadingText != null && loadingText!.isNotEmpty) ...[
+                    SizedBox(width: 12.w),
+                    Text(loadingText!),
                   ],
                 ],
               )
-            : Text(
-                text,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+            : Text(text, key: const ValueKey('text_btn')),
       ),
     );
   }
 }
 
-/// Loading widget với animation xoay custom
-class CustomLoadingWidget extends StatefulWidget {
-  final double size;
-  final Color color;
-  final Duration duration;
+// --- QUẢN LÝ DIALOG VÀ EXTENSION ---
 
-  const CustomLoadingWidget({
-    super.key,
-    this.size = 32,
-    this.color = const Color(0xFF0D9488),
-    this.duration = const Duration(milliseconds: 1000),
-  });
+/// Lớp quản lý trạng thái hiển thị của dialog để tránh các lỗi không mong muốn.
+/// (Singleton Pattern)
+class _LoadingDialogManager {
+  _LoadingDialogManager._();
+  static final instance = _LoadingDialogManager._();
 
-  @override
-  State<CustomLoadingWidget> createState() => _CustomLoadingWidgetState();
+  bool _isShowing = false;
+
+  void show(
+    BuildContext context, {
+    String? message,
+    bool barrierDismissible = false,
+    LoadingType type = LoadingType.pulse,
+  }) {
+    if (_isShowing) return; // Không hiển thị nếu đã có dialog
+
+    _isShowing = true;
+    showDialog(
+      context: context,
+      barrierDismissible: barrierDismissible,
+      barrierColor: Colors.black.withOpacity(0.5),
+      builder: (dialogContext) => PopScope(
+        canPop: barrierDismissible,
+        child: Dialog(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          child: Container(
+            padding: EdgeInsets.all(24.w),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16.r),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 20,
+                  offset: const Offset(0, 5),
+                ),
+              ],
+            ),
+            child: LoadingWidget.medium(message: message, type: type),
+          ),
+        ),
+      ),
+    ).then((_) {
+      _isShowing = false; // Đảm bảo cờ được reset khi dialog đóng
+    });
+  }
+
+  void hide(BuildContext context) {
+    if (_isShowing && Navigator.of(context, rootNavigator: true).canPop()) {
+      Navigator.of(context, rootNavigator: true).pop();
+    }
+  }
 }
 
-class _CustomLoadingWidgetState extends State<CustomLoadingWidget>
+/// Extension trên BuildContext để dễ dàng gọi hiển thị/ẩn dialog.
+extension LoadingDialogExtension on BuildContext {
+  /// Hiển thị loading dialog một cách an toàn.
+  void showLoadingDialog({
+    String? message,
+    bool barrierDismissible = false,
+    LoadingType type = LoadingType.pulse,
+  }) {
+    _LoadingDialogManager.instance.show(
+      this,
+      message: message,
+      barrierDismissible: barrierDismissible,
+      type: type,
+    );
+  }
+
+  /// Ẩn loading dialog một cách an toàn.
+  void hideLoadingDialog() {
+    _LoadingDialogManager.instance.hide(this);
+  }
+}
+
+// --- CÁC WIDGET ANIMATION NỘI BỘ (PRIVATE) ---
+
+class _CircularLoader extends StatefulWidget {
+  final Color color;
+  final double size;
+  const _CircularLoader({required this.color, required this.size});
+  @override
+  State<_CircularLoader> createState() => _CircularLoaderState();
+}
+
+class _CircularLoaderState extends State<_CircularLoader>
     with SingleTickerProviderStateMixin {
-  late AnimationController _animationController;
+  late AnimationController _controller;
 
   @override
   void initState() {
     super.initState();
-    _animationController = AnimationController(
-      duration: widget.duration,
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 1200),
       vsync: this,
     )..repeat();
   }
 
   @override
   void dispose() {
-    _animationController.dispose();
+    _controller.dispose();
     super.dispose();
   }
 
@@ -280,40 +323,439 @@ class _CustomLoadingWidgetState extends State<CustomLoadingWidget>
       width: widget.size,
       height: widget.size,
       child: AnimatedBuilder(
-        animation: _animationController,
-        builder: (context, child) {
+        animation: _controller,
+        builder: (_, __) {
           return Transform.rotate(
-            angle: _animationController.value * 2 * 3.14159,
-            child: Container(
-              width: widget.size,
-              height: widget.size,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: widget.color.withOpacity(0.3),
-                  width: widget.size * 0.08,
-                ),
+            angle: _controller.value * 2 * math.pi,
+            child: CustomPaint(painter: _CircularPainter(color: widget.color)),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _CircularPainter extends CustomPainter {
+  final Color color;
+  _CircularPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final rect = Rect.fromCircle(center: center, radius: size.width / 2);
+    final paint = Paint()
+      ..shader = SweepGradient(
+        colors: [color.withOpacity(0.1), color],
+        stops: const [0.0, 0.75],
+        transform: const GradientRotation(math.pi / 2),
+      ).createShader(rect)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = size.width * 0.1
+      ..strokeCap = StrokeCap.round;
+
+    canvas.drawArc(rect, 0, 1.5 * math.pi, false, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class _DotsLoader extends StatefulWidget {
+  final Color color;
+  final double size;
+  const _DotsLoader({required this.color, required this.size});
+  @override
+  State<_DotsLoader> createState() => _DotsLoaderState();
+}
+
+class _DotsLoaderState extends State<_DotsLoader>
+    with TickerProviderStateMixin {
+  late List<AnimationController> _controllers;
+  final _dotCount = 3;
+
+  @override
+  void initState() {
+    super.initState();
+    _controllers = List.generate(
+      _dotCount,
+      (index) => AnimationController(
+        duration: const Duration(milliseconds: 300),
+        vsync: this,
+      ),
+    );
+
+    for (int i = 0; i < _dotCount; i++) {
+      Future.delayed(Duration(milliseconds: i * 150), () {
+        if (mounted) _controllers[i].repeat(reverse: true);
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    for (var controller in _controllers) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final dotSize = widget.size * 0.2;
+    return SizedBox(
+      width: widget.size,
+      height: widget.size,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: List.generate(_dotCount, (index) {
+          return ScaleTransition(
+            scale: Tween<double>(begin: 0.5, end: 1.0).animate(
+              CurvedAnimation(
+                parent: _controllers[index],
+                curve: Curves.easeOut,
               ),
-              child: Stack(
-                children: [
-                  Positioned(
-                    top: 0,
-                    left: widget.size * 0.4,
-                    child: Container(
-                      width: widget.size * 0.08,
-                      height: widget.size * 0.3,
-                      decoration: BoxDecoration(
-                        color: widget.color,
-                        borderRadius: BorderRadius.circular(widget.size * 0.04),
-                      ),
+            ),
+            child: Container(
+              width: dotSize,
+              height: dotSize,
+              decoration: BoxDecoration(
+                color: widget.color,
+                shape: BoxShape.circle,
+              ),
+            ),
+          );
+        }),
+      ),
+    );
+  }
+}
+
+class _PulseLoader extends StatefulWidget {
+  final Color color;
+  final double size;
+
+  const _PulseLoader({required this.color, required this.size});
+
+  @override
+  State<_PulseLoader> createState() => _PulseLoaderState();
+}
+
+class _PulseLoaderState extends State<_PulseLoader>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+  late Animation<double> _opacityAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 1000),
+      vsync: this,
+    )..repeat();
+
+    _scaleAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
+
+    _opacityAnimation = Tween<double>(
+      begin: 1.0,
+      end: 0.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: widget.size,
+      height: widget.size,
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) {
+          return Stack(
+            alignment: Alignment.center,
+            children: [
+              Transform.scale(
+                scale: _scaleAnimation.value,
+                child: Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: widget.color.withOpacity(_opacityAnimation.value),
+                      width: 2.w,
                     ),
                   ),
-                ],
+                ),
               ),
+              Container(
+                width: widget.size * 0.3,
+                height: widget.size * 0.3,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: widget.color,
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _SpinnerLoader extends StatefulWidget {
+  final Color color;
+  final double size;
+
+  const _SpinnerLoader({required this.color, required this.size});
+
+  @override
+  State<_SpinnerLoader> createState() => _SpinnerLoaderState();
+}
+
+class _SpinnerLoaderState extends State<_SpinnerLoader>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: widget.size,
+      height: widget.size,
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) {
+          return CustomPaint(
+            painter: _SpinnerPainter(
+              color: widget.color,
+              progress: _controller.value,
             ),
           );
         },
       ),
     );
   }
+}
+
+class _SpinnerPainter extends CustomPainter {
+  final Color color;
+  final double progress;
+
+  _SpinnerPainter({required this.color, required this.progress});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = size.width * 0.08
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = size.width * 0.4;
+
+    for (int i = 0; i < 3; i++) {
+      final angle = (progress * 2 * math.pi) + (i * 2.0);
+      paint.color = color.withOpacity(1.0 - (i * 0.3));
+
+      canvas.drawArc(
+        Rect.fromCircle(center: center, radius: radius),
+        angle,
+        1.5, // sweep angle
+        false,
+        paint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+}
+
+class _WaveLoader extends StatefulWidget {
+  final Color color;
+  final double size;
+
+  const _WaveLoader({required this.color, required this.size});
+
+  @override
+  State<_WaveLoader> createState() => _WaveLoaderState();
+}
+
+class _WaveLoaderState extends State<_WaveLoader>
+    with TickerProviderStateMixin {
+  late List<AnimationController> _controllers;
+  final int _barCount = 5;
+
+  @override
+  void initState() {
+    super.initState();
+    _controllers = List.generate(
+      _barCount,
+      (index) => AnimationController(
+        duration: Duration(milliseconds: 400 + (index * 100)),
+        vsync: this,
+      ),
+    );
+
+    for (int i = 0; i < _controllers.length; i++) {
+      Future.delayed(Duration(milliseconds: i * 80), () {
+        if (mounted) {
+          _controllers[i].repeat(reverse: true);
+        }
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    for (var controller in _controllers) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final barWidth = widget.size * 0.1;
+    final maxHeight = widget.size;
+
+    return SizedBox(
+      width: widget.size,
+      height: maxHeight,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: List.generate(_barCount, (index) {
+          return AnimatedBuilder(
+            animation: _controllers[index],
+            builder: (context, child) {
+              return Container(
+                width: barWidth,
+                height: maxHeight *
+                    Tween<double>(begin: 0.2, end: 1.0)
+                        .animate(
+                          CurvedAnimation(
+                            parent: _controllers[index],
+                            curve: Curves.easeInOut,
+                          ),
+                        )
+                        .value,
+                decoration: BoxDecoration(
+                  color: widget.color,
+                  borderRadius: BorderRadius.circular(barWidth),
+                ),
+              );
+            },
+          );
+        }),
+      ),
+    );
+  }
+}
+
+class _GearLoader extends StatefulWidget {
+  final Color color;
+  final double size;
+
+  const _GearLoader({required this.color, required this.size});
+
+  @override
+  State<_GearLoader> createState() => _GearLoaderState();
+}
+
+class _GearLoaderState extends State<_GearLoader>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 1500),
+      vsync: this,
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: widget.size,
+      height: widget.size,
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (_, __) {
+          return Transform.rotate(
+            angle: _controller.value * 2 * math.pi,
+            child: CustomPaint(painter: _GearPainter(color: widget.color)),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _GearPainter extends CustomPainter {
+  final Color color;
+  _GearPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = size.width * 0.1;
+
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = size.width * 0.4;
+    final path = Path();
+
+    // Draw gear teeth
+    for (int i = 0; i < 8; i++) {
+      final angle = (i / 8) * 2 * math.pi;
+      final p1 =
+          center + Offset(math.cos(angle) * radius, math.sin(angle) * radius);
+      final p2 = center +
+          Offset(
+            math.cos(angle) * radius * 1.2,
+            math.sin(angle) * radius * 1.2,
+          );
+      path.moveTo(p1.dx, p1.dy);
+      path.lineTo(p2.dx, p2.dy);
+    }
+
+    canvas.drawCircle(center, radius, paint);
+    canvas.drawPath(path, paint..strokeCap = StrokeCap.round);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

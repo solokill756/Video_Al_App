@@ -4,7 +4,7 @@ targets:
       json_serializable:
         options:
           explicit_to_json: true
-          field_rename: snake
+          field_rename: none
       auto_route_generator:auto_route_generator: # this for @RoutePage
         options:
           enable_cached_builds: true

@@ -125,7 +125,9 @@ class _ForgotPasswordDetailViewState extends State<ForgotPasswordDetailView> {
   void _handleResendOTP() {
     FocusScope.of(context).unfocus();
 
-    context.read<AuthCubit>().sendOtp(email: widget.email);
+    context
+        .read<AuthCubit>()
+        .sendOtp(email: widget.email, type: 'FORGOT_PASSWORD');
   }
 
   @override
@@ -157,7 +159,7 @@ class _ForgotPasswordDetailViewState extends State<ForgotPasswordDetailView> {
           state.maybeWhen(
             resetPasswordSuccess: (resetResponse) {
               AppDialogs.showSnackBar(
-                message: resetResponse.message,
+                message: resetResponse,
                 backgroundColor: Colors.green,
               );
               context.router.replaceAll([const LoginRoute()]);
@@ -395,6 +397,7 @@ class _ForgotPasswordDetailViewState extends State<ForgotPasswordDetailView> {
                               return LoadingButton(
                                 isLoading: isLoading,
                                 onPressed: _handleResetPassword,
+                                backgroundColor: const Color(0xFF0D9488),
                                 text: 'Change passwords',
                                 loadingText: 'Processing...',
                               );

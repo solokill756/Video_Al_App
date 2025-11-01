@@ -188,6 +188,8 @@ class _RegisterViewState extends State<RegisterView> {
                                 onPressed: () => _handleContinue(context),
                                 text: 'Continue',
                                 loadingText: 'Processing...',
+                                backgroundColor: const Color(0xFF0D9488),
+                                textColor: Colors.white,
                               );
                             },
                           ),

@@ -25,4 +25,6 @@ abstract class AuthRepository {
 
   Future<Result<StatusApiResponse, ApiError>> resetPassword(
       ResetPasswordRequest request);
+  Future<Result<StatusApiResponse, ApiError>> verify2FA(
+      {required String otpCode});
 }

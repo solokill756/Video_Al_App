@@ -65,10 +65,9 @@ class AuthCubit extends Cubit<AuthState> {
 
     result.fold(
       (registerResponse) {
-        emit(AuthState.sendOtpSuccess(registerResponse));
+        emit(AuthState.registerSuccess(registerResponse));
       },
       (error) {
-        // Sử dụng pattern matching để check validation error
         error.maybeWhen(
           (code, message) => emit(AuthState.error(error.message)),
           validation: (statusCode, errors) {
@@ -143,10 +142,9 @@ class AuthCubit extends Cubit<AuthState> {
 
     result.fold(
       (resetPasswordResponse) {
-        emit(AuthState.resetPasswordSuccess(resetPasswordResponse));
+        emit(AuthState.resetPasswordSuccess('Reset password successfully'));
       },
       (error) {
-        // Sử dụng pattern matching để check validation error
         error.maybeWhen(
           (code, message) => emit(AuthState.error(error.message)),
           validation: (statusCode, errors) {
@@ -154,6 +152,28 @@ class AuthCubit extends Cubit<AuthState> {
           },
           orElse: () {
             emit(AuthState.error(error.message));
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> verify2FA({required String otpCode}) async {
+    emit(const AuthState.twoFactorAuthVerifying());
+
+    final result = await _authRepository.verify2FA(otpCode: otpCode);
+
+    result.fold(
+      (response) {
+        emit(const AuthState.twoFactorAuthVerifiedSuccess(
+            '2FA verified successfully'));
+      },
+      (error) {
+        error.maybeWhen(
+          (code, message) =>
+              emit(AuthState.twoFactorAuthVerifiedFailure(error.message)),
+          orElse: () {
+            emit(AuthState.twoFactorAuthVerifiedFailure(error.message));
           },
         );
       },

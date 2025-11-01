@@ -137,4 +137,18 @@ class AuthApiService {
       statusCode: response.statusCode!,
     );
   }
+
+  Future<StatusApiResponse> verify2FA({required String otpCode}) async {
+    final response = await _dio.post(
+      '/auth/verify-2fa',
+      data: {'totpCode': otpCode},
+    );
+    final responseData = response.data as Map<String, dynamic>;
+    final message =
+        responseData['message'] as String? ?? '2FA verified successfully';
+    return StatusApiResponse(
+      message: message,
+      statusCode: response.statusCode!,
+    );
+  }
 }

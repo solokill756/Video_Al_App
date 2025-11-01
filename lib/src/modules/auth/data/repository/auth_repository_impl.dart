@@ -1,3 +1,4 @@
+import 'package:dmvgenie/src/modules/Settings/domain/repository/settings_repository.dart';
 import 'package:injectable/injectable.dart';
 import 'package:result_dart/result_dart.dart';
 
@@ -16,8 +17,9 @@ import '../../domain/repository/auth_repository.dart';
 @Injectable(as: AuthRepository)
 class AuthRepositoryImpl implements AuthRepository {
   final AuthApiService _authApiService;
+  final SettingsRepository _settingsRepository;
 
-  AuthRepositoryImpl(this._authApiService);
+  AuthRepositoryImpl(this._authApiService, this._settingsRepository);
 
   @override
   Future<Result<LoginResponse, ApiError>> login({
@@ -34,6 +36,14 @@ class AuthRepositoryImpl implements AuthRepository {
       (loginResponse) async {
         await Storage.setAccessToken(loginResponse.accessToken);
         await Storage.setRefreshToken(loginResponse.refreshToken);
+        await _settingsRepository.getCurrentUser().fold(
+          (userProfile) async {
+            await Storage.setIsEnable2FA(userProfile.isEnable2FA);
+          },
+          (error) async {
+            await Storage.setIsEnable2FA(false);
+          },
+        );
         return loginResponse;
       },
       (error) async {
@@ -92,6 +102,14 @@ class AuthRepositoryImpl implements AuthRepository {
       ResetPasswordRequest request) async {
     return await _authApiService
         .resetPassword(request)
+        .tryGet((response) => response);
+  }
+
+  @override
+  Future<Result<StatusApiResponse, ApiError>> verify2FA(
+      {required String otpCode}) async {
+    return await _authApiService
+        .verify2FA(otpCode: otpCode)
         .tryGet((response) => response);
   }
 }

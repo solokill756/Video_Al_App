@@ -11,6 +11,7 @@ class _Keys {
   static const deviceId = 'device_id';
   static const pushToken = 'push_token';
   static const ratingShown = 'rating_shown';
+  static const isEnable2FA = 'is_enable_2fa';
 }
 
 class Storage {
@@ -95,4 +96,8 @@ class Storage {
   static Future setRatingShown(bool val) => _set(_Keys.ratingShown, val);
 
   static bool? get ratingShown => _get(_Keys.ratingShown);
+
+  static Future setIsEnable2FA(bool val) => _set(_Keys.isEnable2FA, val);
+
+  static bool? get isEnable2FA => _get(_Keys.isEnable2FA);
 }
