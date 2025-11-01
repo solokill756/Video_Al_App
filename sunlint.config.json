@@ -1,0 +1,28 @@
+{
+  "rules": {
+    "C019": "warn",
+    "C031": "warn",
+
+    "D001": "error",
+    "D002": "warn",
+    "D003": "error",
+    "D004": "error",
+    "D005": "error",
+    "D021": "error",
+    "D022": "error",
+    "D025": "error"
+  },
+  "languages": ["dart"],
+  "include": ["lib/**/*.dart", "test/**/*.dart"],
+  "ignorePatterns": ["**/*.g.dart", "**/*.freezed.dart"],
+  "ai": {
+    "enabled": true,
+    "provider": "openai",
+    "model": "gpt-4o-mini",
+    "fallbackToPattern": true
+  },
+  "output": {
+    "format": "dart-analyzer",
+    "console": true
+  }
+}

@@ -1,12 +1,17 @@
 import 'package:auto_route/auto_route.dart';
-import 'package:dmvgenie/src/common/dialogs/app_dialogs.dart';
-import 'package:dmvgenie/src/modules/app/app_router.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../common/dialogs/app_dialogs.dart';
 import '../../../../common/dialogs/custom_alert_dialog.dart';
-import '../application/settings_cubit/settings_cubit.dart';
+import '../../../app/app_router.dart';
+import '../../data/model/user_profile_model.dart';
+import '../application/cubit/settings_cubit.dart';
+import '../components/change_password_dialog.dart';
+import '../components/disable_2fa_dialog.dart';
+import '../components/enable_2fa_dialog.dart';
 
 @RoutePage()
 class SettingsPage extends StatelessWidget {
@@ -29,16 +34,13 @@ class _SettingsViewState extends State<SettingsView> {
   bool _notifications = true;
   bool _autoPlay = true;
   bool _saveSearchHistory = true;
+  bool _twoFactorAuth = false;
+  String? _avatarUrl;
 
   @override
   void initState() {
     super.initState();
-    SystemChrome.setSystemUIOverlayStyle(
-      const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.dark,
-      ),
-    );
+    context.read<SettingsCubit>().loadSettings();
   }
 
   @override
@@ -47,22 +49,22 @@ class _SettingsViewState extends State<SettingsView> {
       backgroundColor: const Color(0xFFF8FAFC),
       body: BlocListener<SettingsCubit, SettingsState>(
         listener: (context, state) {
-          state.when(
-            initial: () {},
-            loading: () {},
-            loaded: (isNotificationEnabled, isAutoPlay) {
-              setState(() {
-                _notifications = isNotificationEnabled;
-                _autoPlay = isAutoPlay;
-              });
-            },
-            error: (message) {
-              AppDialogs.showSnackBar(
-                message: message,
-                backgroundColor: Colors.redAccent,
-              );
-            },
-          );
+          state.maybeWhen(
+              loaded: (isNotificationEnabled, isAutoPlay, user, twoFaLink) {
+                setState(() {
+                  _notifications = isNotificationEnabled;
+                  _autoPlay = isAutoPlay;
+                  _twoFactorAuth = user.isEnable2FA;
+                  _avatarUrl = user.avatar;
+                });
+              },
+              error: (message) {
+                AppDialogs.showSnackBar(
+                  message: message,
+                  backgroundColor: Colors.redAccent,
+                );
+              },
+              orElse: () {});
         },
         child: SafeArea(
           child: Column(
@@ -81,7 +83,19 @@ class _SettingsViewState extends State<SettingsView> {
                         const SizedBox(height: 24),
 
                         // Profile Section
-                        _buildProfileSection(),
+                        BlocBuilder<SettingsCubit, SettingsState>(
+                          builder: (context, state) {
+                            return state.maybeWhen(
+                              loaded: (isNotificationEnabled, isAutoPlay, user,
+                                  twoFaLink) {
+                                return _buildProfileSection(user);
+                              },
+                              loading: () => const Center(
+                                  child: CircularProgressIndicator()),
+                              orElse: () => _buildProfileSection(null),
+                            );
+                          },
+                        ),
 
                         const SizedBox(height: 32),
 
@@ -108,11 +122,12 @@ class _SettingsViewState extends State<SettingsView> {
                         // Logout Button
                         BlocBuilder<SettingsCubit, SettingsState>(
                           builder: (context, state) {
-                            return state.when(
+                            return state.maybeWhen(
                               initial: () => _buildLogoutButton(),
                               loading: () => const Center(
                                   child: CircularProgressIndicator()),
-                              loaded: (isNotificationEnabled, isAutoPlay) =>
+                              loaded: (isNotificationEnabled, isAutoPlay, user,
+                                      twoFaLink) =>
                                   _buildLogoutButton(),
                               error: (message) {
                                 WidgetsBinding.instance
@@ -124,6 +139,7 @@ class _SettingsViewState extends State<SettingsView> {
                                 });
                                 return _buildLogoutButton();
                               },
+                              orElse: () => _buildLogoutButton(),
                             );
                           },
                         ),
@@ -188,7 +204,7 @@ class _SettingsViewState extends State<SettingsView> {
     );
   }
 
-  Widget _buildProfileSection() {
+  Widget _buildProfileSection(UserProfileModel? user) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -214,14 +230,20 @@ class _SettingsViewState extends State<SettingsView> {
               ),
               borderRadius: BorderRadius.circular(32),
             ),
-            child: const Icon(
-              // bool _highQuality = false;
-              // bool _saveSearchHistory = true;
-              // bool _biometricAuth = false;
-              Icons.person,
-              color: Colors.white,
-              size: 32,
-            ),
+            child: _avatarUrl != null
+                ? ClipOval(
+                    child: Image.network(
+                      _avatarUrl!,
+                      width: 64,
+                      height: 64,
+                      fit: BoxFit.cover,
+                    ),
+                  )
+                : const Icon(
+                    Icons.person,
+                    color: Colors.white,
+                    size: 32,
+                  ),
           ),
 
           const SizedBox(width: 16),
@@ -231,8 +253,8 @@ class _SettingsViewState extends State<SettingsView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'John Doe',
+                Text(
+                  user?.name ?? 'User Name',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -241,7 +263,7 @@ class _SettingsViewState extends State<SettingsView> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'user@example.com',
+                  user?.email ?? 'user@example.com',
                   style: TextStyle(
                     fontSize: 14,
                     color: Colors.grey[600],
@@ -255,8 +277,10 @@ class _SettingsViewState extends State<SettingsView> {
                     color: const Color(0xFF0D9488).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Text(
-                    'Premium',
+                  child: Text(
+                    user?.plan?.planType == 'FREE'
+                        ? 'Free Customer'
+                        : 'Premium Customer',
                     style: TextStyle(
                       fontSize: 12,
                       color: Color(0xFF0D9488),
@@ -268,11 +292,11 @@ class _SettingsViewState extends State<SettingsView> {
             ),
           ),
 
-          // Edit Button
+          // View Profile Button
           GestureDetector(
             onTap: () {
               HapticFeedback.lightImpact();
-              _showEditProfile();
+              context.router.push(const ProfileRoute());
             },
             child: Container(
               padding: const EdgeInsets.all(8),
@@ -281,7 +305,7 @@ class _SettingsViewState extends State<SettingsView> {
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Icon(
-                Icons.edit,
+                Icons.arrow_forward_ios,
                 color: Color(0xFF64748B),
                 size: 20,
               ),
@@ -335,6 +359,17 @@ class _SettingsViewState extends State<SettingsView> {
       title: 'Privacy & Security',
       children: [
         _buildSwitchTile(
+          icon: Icons.security,
+          title: 'Two-Factor Authentication',
+          subtitle: 'Add extra security to your account',
+          value: _twoFactorAuth,
+          onChanged: (value) {
+            _handle2FAToggle(
+              value,
+            );
+          },
+        ),
+        _buildSwitchTile(
           icon: Icons.history,
           title: 'Save Search History',
           subtitle: 'Remember searched keywords',
@@ -344,6 +379,12 @@ class _SettingsViewState extends State<SettingsView> {
               _saveSearchHistory = value;
             });
           },
+        ),
+        _buildActionTile(
+          icon: Icons.lock_outline,
+          title: 'Change Password',
+          subtitle: 'Update your account password',
+          onTap: () => _showChangePasswordDialog(),
         ),
         _buildActionTile(
           icon: Icons.delete_outline,
@@ -482,69 +523,6 @@ class _SettingsViewState extends State<SettingsView> {
     );
   }
 
-  Widget _buildSelectTile({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        onTap();
-      },
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        child: Row(
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: const Color(0xFF0D9488).withOpacity(0.1),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(
-                icon,
-                color: const Color(0xFF0D9488),
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF1F2937),
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Color(0xFF6B7280),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const Icon(
-              Icons.arrow_forward_ios,
-              color: Color(0xFF9CA3AF),
-              size: 16,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildActionTile({
     required IconData icon,
     required String title,
@@ -608,82 +586,6 @@ class _SettingsViewState extends State<SettingsView> {
     );
   }
 
-  Widget _buildSliderTile({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required double value,
-    required double min,
-    required double max,
-    required int divisions,
-    required ValueChanged<double> onChanged,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF0D9488).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(
-                  icon,
-                  color: const Color(0xFF0D9488),
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF1F2937),
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      subtitle,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Color(0xFF6B7280),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          SliderTheme(
-            data: SliderTheme.of(context).copyWith(
-              activeTrackColor: const Color(0xFF0D9488),
-              inactiveTrackColor: const Color(0xFF0D9488).withOpacity(0.3),
-              thumbColor: const Color(0xFF0D9488),
-              overlayColor: const Color(0xFF0D9488).withOpacity(0.2),
-            ),
-            child: Slider(
-              value: value,
-              min: min,
-              max: max,
-              divisions: divisions,
-              onChanged: onChanged,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildLogoutButton() {
     return Container(
       width: double.infinity,
@@ -709,26 +611,6 @@ class _SettingsViewState extends State<SettingsView> {
             fontWeight: FontWeight.bold,
           ),
         ),
-      ),
-    );
-  }
-
-  void _showEditProfile() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        title: const Text('Edit Profile'),
-        content: const Text(
-            'The edit profile feature will be available in the next version.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
-          ),
-        ],
       ),
     );
   }
@@ -864,6 +746,57 @@ class _SettingsViewState extends State<SettingsView> {
           ),
         ],
       ),
+    );
+  }
+
+  void _handle2FAToggle(
+    bool enable,
+  ) {
+    // Lấy cubit từ context
+    final settingsCubit = context.read<SettingsCubit>();
+
+    if (enable) {
+      // Kích hoạt 2FA
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) =>
+            // Cung cấp cubit cho dialog
+            BlocProvider.value(
+          value: settingsCubit,
+          child: const Enable2FADialog(),
+        ),
+      ).then((success) {
+        if (success != true) {
+          setState(() {
+            _twoFactorAuth = false;
+          });
+        }
+      });
+    } else {
+      // Vô hiệu hóa 2FA
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => BlocProvider.value(
+          value: settingsCubit,
+          child: const Disable2FADialog(),
+        ),
+      ).then((success) {
+        if (success != true) {
+          setState(() {
+            _twoFactorAuth = true;
+          });
+        }
+      });
+    }
+  }
+
+  void _showChangePasswordDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => ChangePasswordDialog(),
     );
   }
 }

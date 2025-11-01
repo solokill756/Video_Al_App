@@ -147,7 +147,7 @@ class _RegisterDetailViewState extends State<RegisterDetailView> {
       return;
     }
 
-    context.read<AuthCubit>().register(
+    await context.read<AuthCubit>().register(
           email: widget.email,
           password: password,
           name: name,
@@ -481,6 +481,8 @@ class _RegisterDetailViewState extends State<RegisterDetailView> {
                                 onPressed: _handleRegister,
                                 text: 'Complete Registration',
                                 loadingText: 'Processing...',
+                                backgroundColor: const Color(0xFF0D9488),
+                                textColor: Colors.white,
                               );
                             },
                           ),

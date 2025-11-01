@@ -21,6 +21,11 @@ class AuthState with _$AuthState {
       _SendOtpSuccess;
   const factory AuthState.registerSuccess(StatusApiResponse registerResponse) =
       _RegisterSuccess;
-  const factory AuthState.resetPasswordSuccess(
-      StatusApiResponse resetPasswordResponse) = _ResetPasswordSuccess;
+  const factory AuthState.resetPasswordSuccess(String message) =
+      _ResetPasswordSuccess;
+  const factory AuthState.twoFactorAuthVerifiedSuccess(String message) =
+      TwoFactorAuthVerifiedSuccess;
+  const factory AuthState.twoFactorAuthVerifiedFailure(String message) =
+      TwoFactorAuthVerifiedFailure;
+  const factory AuthState.twoFactorAuthVerifying() = TwoFactorAuthVerifying;
 }

@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:dmvgenie/src/core/data/remote/interceptors/auth_interceptor.dart';
+
 import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
 import 'package:result_dart/result_dart.dart';
@@ -10,6 +10,7 @@ import '../../../../common/constants/app_constants.dart';
 import '../../../../common/utils/app_environment.dart';
 import '../../../../common/extensions/optional_x.dart';
 import '../base/api_error.dart';
+import '../interceptors/auth_interceptor.dart';
 import '../interceptors/error_interceptor.dart';
 
 @module

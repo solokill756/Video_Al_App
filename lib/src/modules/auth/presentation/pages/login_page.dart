@@ -102,7 +102,7 @@ class _LoginViewState extends State<LoginView> {
                   backgroundColor: Colors.green,
                 );
                 // Navigate to home screen
-                context.router.push(const VideoSearchHomeRoute());
+                context.router.replaceAll([const VideoSearchHomeRoute()]);
               },
               error: (message) {
                 AppDialogs.showSnackBar(
@@ -328,7 +328,7 @@ class _LoginViewState extends State<LoginView> {
                                   text: 'Login',
                                   loadingText: 'Logging in...',
                                   backgroundColor: const Color(0xFF0D9488),
-                                  borderRadius: 12,
+                                  textColor: Colors.white,
                                 ),
                               ),
                             ],
