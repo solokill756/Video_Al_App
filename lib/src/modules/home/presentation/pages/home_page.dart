@@ -1,5 +1,4 @@
 import 'package:auto_route/auto_route.dart';
-import 'package:dmvgenie/src/modules/app/app_router.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -23,19 +22,6 @@ class VideoSearchHomeView extends StatefulWidget {
 class _VideoSearchHomeState extends State<VideoSearchHomeView> {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocus = FocusNode();
-
-  @override
-  void initState() {
-    super.initState();
-
-    // Set status bar
-    SystemChrome.setSystemUIOverlayStyle(
-      const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.dark,
-      ),
-    );
-  }
 
   @override
   void dispose() {
@@ -133,28 +119,6 @@ class _VideoSearchHomeState extends State<VideoSearchHomeView> {
               fontSize: 20,
               fontWeight: FontWeight.bold,
               color: Color(0xFF1F2937),
-            ),
-          ),
-
-          const Spacer(),
-
-          // Menu button
-          GestureDetector(
-            onTap: () {
-              HapticFeedback.lightImpact();
-              _showMenu();
-            },
-            child: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF1F5F9),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Icon(
-                Icons.menu,
-                color: Color(0xFF64748B),
-                size: 20,
-              ),
             ),
           ),
         ],
@@ -732,53 +696,6 @@ class _VideoSearchHomeState extends State<VideoSearchHomeView> {
         ),
       );
     }
-  }
-
-  void _showMenu() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(
-            top: Radius.circular(20),
-          ),
-        ),
-        child: SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 40,
-                height: 4,
-                margin: const EdgeInsets.symmetric(vertical: 12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE2E8F0),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              ListTile(
-                leading: const Icon(Icons.settings),
-                title: const Text('Settings'),
-                onTap: () => context.router.push(SettingsRoute()),
-              ),
-              ListTile(
-                leading: const Icon(Icons.history),
-                title: const Text('Search History'),
-                onTap: () => Navigator.pop(context),
-              ),
-              ListTile(
-                leading: const Icon(Icons.help_outline),
-                title: const Text('Help'),
-                onTap: () => Navigator.pop(context),
-              ),
-              const SizedBox(height: 20),
-            ],
-          ),
-        ),
-      ),
-    );
   }
 
   void _performSearch(String query) {

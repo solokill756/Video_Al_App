@@ -31,8 +31,8 @@ class _AppShellPageState extends State<AppShellPage> {
       case BottomNavItem.upload:
         context.router.replaceNamed('upload');
         break;
-      case BottomNavItem.profile:
-        context.router.replaceNamed('profile');
+      case BottomNavItem.settings:
+        context.router.replaceNamed('settings');
         break;
     }
   }
