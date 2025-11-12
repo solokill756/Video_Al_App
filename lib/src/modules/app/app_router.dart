@@ -12,6 +12,9 @@ import '../auth/presentation/pages/register_page.dart';
 import '../auth/presentation/pages/register_detail_page.dart';
 import '../home/presentation/pages/home_page.dart';
 import '../upload/presentation/pages/upload_video_page.dart';
+import '../video_list/presentation/pages/video_list_page.dart';
+import '../video_detail/presentation/pages/video_detail_page.dart';
+import '../video_list/presentation/pages/video_player_page.dart';
 import '../auth/presentation/pages/verify_2fa_login_page.dart';
 import 'pages/app_shell_page.dart';
 import 'splash_page.dart';
@@ -50,16 +53,34 @@ class AppRouter extends _$AppRouter {
               path: '',
             ),
             AutoRoute(
-              page: ProfileRoute.page,
-              path: 'profile',
-            ),
-            AutoRoute(
               page: UploadVideoRoute.page,
               path: 'upload',
+            ),
+            AutoRoute(
+              page: SettingsRoute.page,
+              path: 'settings',
             ),
           ],
         ),
         AutoRoute(
-            page: SettingsRoute.page, path: '/settings', guards: [_authGuard]),
+          page: ProfileRoute.page,
+          path: '/profile',
+          guards: [_authGuard],
+        ),
+        AutoRoute(
+          page: VideoListRoute.page,
+          path: '/videos',
+          guards: [_authGuard],
+        ),
+        AutoRoute(
+          page: VideoDetailRoute.page,
+          path: '/videos/:videoId',
+          guards: [_authGuard],
+        ),
+        AutoRoute(
+          page: VideoPlayerRoute.page,
+          path: '/video-player',
+          guards: [_authGuard],
+        )
       ];
 }

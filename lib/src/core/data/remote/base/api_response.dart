@@ -35,7 +35,7 @@ class ResponseWrapper<T> extends GenericObject<T> {
 class StatusApiResponse with _$StatusApiResponse {
   const factory StatusApiResponse({
     required String message,
-    required int statusCode,
+    required int? statusCode,
   }) = _StatusApiResponse;
 
   factory StatusApiResponse.fromJson(Map<String, dynamic> json) =>
@@ -76,6 +76,31 @@ class PagingApiResponse<T> with _$PagingApiResponse<T> {
           },
           // json['data'],
           fromJsonT);
+}
+
+@Freezed(genericArgumentFactories: true)
+class PaginatedApiResponse<T> with _$PaginatedApiResponse<T> {
+  const factory PaginatedApiResponse({
+    required List<T> data,
+    required PaginationResponse pagination,
+  }) = _PaginatedApiResponse;
+
+  factory PaginatedApiResponse.fromJson(
+          Map<String, dynamic> json, T Function(Object?) fromJsonT) =>
+      _$PaginatedApiResponseFromJson(json, fromJsonT);
+}
+
+@Freezed(genericArgumentFactories: true)
+class PaginationResponse with _$PaginationResponse {
+  const factory PaginationResponse({
+    required int totalPages,
+    required int totalItems,
+    required int pageSize,
+    required int pageIndex,
+  }) = _PaginationResponse;
+
+  factory PaginationResponse.fromJson(Map<String, dynamic> json) =>
+      _$PaginationResponseFromJson(json);
 }
 
 extension FoldedSingleApiResponse<T extends Object>

@@ -4,7 +4,7 @@ enum BottomNavItem {
   home,
   explore,
   upload,
-  profile,
+  settings,
 }
 
 class AppBottomNavigationBar extends StatefulWidget {
@@ -59,9 +59,9 @@ class _AppBottomNavigationBarState extends State<AppBottomNavigationBar> {
                 isCenter: true,
               ),
               _buildNavItem(
-                icon: Icons.person_rounded,
-                label: 'Profile',
-                item: BottomNavItem.profile,
+                icon: Icons.settings,
+                label: 'Settings',
+                item: BottomNavItem.settings,
               ),
             ],
           ),
