@@ -25,6 +25,7 @@ import 'src/modules/upload/domain/repository/upload_repository.dart';
 import 'src/modules/upload/presentation/application/cubit/upload_cubit.dart';
 import 'src/modules/plan/presentation/application/cubit/plan_cubit.dart'
     as plan_cubit;
+import 'src/modules/payment/presentation/application/cubit/payment_cubit.dart';
 import 'src/modules/video_list/presentation/application/cubit/video_cubit.dart'
     as video_list_cubit;
 import 'src/modules/video_detail/presentation/application/cubit/video_detail_cubit.dart';
@@ -65,6 +66,9 @@ Future<void> main() async {
             ),
             BlocProvider(
               create: (context) => getIt<plan_cubit.PlanCubit>(),
+            ),
+            BlocProvider(
+              create: (context) => getIt<PaymentCubit>(),
             ),
             BlocProvider(
               create: (context) => getIt<video_list_cubit.VideoCubit>(),

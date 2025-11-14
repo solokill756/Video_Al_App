@@ -16,7 +16,7 @@ abstract class PlanApiService {
 
   // Get All Plans
   @GET('/plans')
-  Future<PagingApiResponse<Plan>> getAllPlans({
+  Future<PlanListApiResponse<Plan>> getAllPlans({
     @Query('pageIndex') required int pageIndex,
     @Query('pageSize') required int pageSize,
   });

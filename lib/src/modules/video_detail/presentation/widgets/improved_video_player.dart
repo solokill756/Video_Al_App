@@ -341,7 +341,9 @@ class _FullScreenVideoPlayerState extends State<_FullScreenVideoPlayer> {
 
     // Add listener to update UI when video plays
     widget.controller.addListener(() {
-      setState(() {});
+      if (mounted) {
+        setState(() {});
+      }
     });
   }
 

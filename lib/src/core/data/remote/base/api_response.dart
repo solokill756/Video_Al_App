@@ -118,3 +118,28 @@ extension FoldedListApiResponse<T extends Object>
         (failure) => Failure(failure),
       );
 }
+
+@Freezed(genericArgumentFactories: true)
+class PlanListApiResponse<T> with _$PlanListApiResponse<T> {
+  const factory PlanListApiResponse({
+    required List<T> data,
+    required PlanPaginationData pagination,
+  }) = _PlanListApiResponse;
+
+  factory PlanListApiResponse.fromJson(
+          Map<String, dynamic> json, T Function(Object?) fromJsonT) =>
+      _$PlanListApiResponseFromJson(json, fromJsonT);
+}
+
+@freezed
+class PlanPaginationData with _$PlanPaginationData {
+  const factory PlanPaginationData({
+    required int totalPages,
+    required int totalItems,
+    required int pageSize,
+    required int pageIndex,
+  }) = _PlanPaginationData;
+
+  factory PlanPaginationData.fromJson(Map<String, dynamic> json) =>
+      _$PlanPaginationDataFromJson(json);
+}

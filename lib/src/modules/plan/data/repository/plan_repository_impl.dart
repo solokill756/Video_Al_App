@@ -20,10 +20,10 @@ class PlanRepositoryImpl implements PlanRepository {
       pageSize: pageSize,
     );
     final pagination = PaginationInfo(
-      totalItems: response.meta.total,
-      totalPages: response.meta.totalPages,
-      pageSize: response.meta.limit,
-      pageIndex: response.meta.page,
+      totalItems: response.pagination.totalItems,
+      totalPages: response.pagination.totalPages,
+      pageSize: response.pagination.pageSize,
+      pageIndex: response.pagination.pageIndex,
     );
     return PlanListResponse(
       data: response.data,
