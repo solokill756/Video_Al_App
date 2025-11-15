@@ -1,0 +1,59 @@
+🔧 CRASH RECOVERY FIX - UiAutomator2 Instrumentation
+═══════════════════════════════════════════════════════════════════════════════
+
+⚠️  PROBLEM:
+   - Test_03 saves changes but UiAutomator2 instrumentation process crashes after
+   - Test_04+ fail because setUp() can't interact with app anymore
+   - Error: "instrumentation process is not running (probably crashed)"
+
+🔧 SOLUTION APPLIED:
+
+1. Enhanced setUp() with Crash Recovery Logic
+   ────────────────────────────────────────────
+   
+   IF UiAutomator2 crash detected THEN:
+   ✅ Wait 2 seconds
+   ✅ Restart app via ADB
+   ✅ Re-login with test credentials
+   ✅ Re-navigate to Profile page
+   ✅ Continue test
+   
+   This ensures tests can recover from crashes automatically
+
+2. Increased Wait Times After Save
+   ────────────────────────────────
+   - test_03: 2s → 4s (after save)
+   - test_05: 2s → 3s (after save attempt)
+   - test_06: 2s → 3s (after save attempt)
+   - test_07: 3s → 4s (after save)
+   
+   Extra wait gives app time to process save without instrumentation crash
+
+═══════════════════════════════════════════════════════════════════════════════
+
+✅ CHANGES MADE:
+
+File: /home/thao/Video_Al_App/appium_test/test_cases/test_edit_profile.py
+
+1. setUp() method:
+   - Wrapped find_elements() call in try-except
+   - Detects "instrumentation process is not running" error
+   - Calls restart_app() method
+   - Re-logs in
+   - Re-navigates to Profile
+
+2. test_03, test_05, test_06, test_07:
+   - Increased time.sleep() after Save calls
+   - Allows app more time to recover before next find_elements()
+
+═══════════════════════════════════════════════════════════════════════════════
+
+🚀 TO TEST:
+
+cd /home/thao/Video_Al_App/appium_test
+source venv/bin/activate
+python3 verify_profile_tests.py
+
+Expected: ✅ ALL 7 TESTS PASS
+
+═══════════════════════════════════════════════════════════════════════════════

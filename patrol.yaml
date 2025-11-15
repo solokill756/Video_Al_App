@@ -1,0 +1,6 @@
+version: 0.14.0
+name: dmvgenie
+testTimeout: 300000
+preRunScript: ''
+bundleOutputDirectory: build/app/outputs/bundle/release
+testBundleFile: integration_test/test_bundle.dart

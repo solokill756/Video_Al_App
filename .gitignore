@@ -28,6 +28,7 @@ migrate_working_dir/
 .project
 .settings/
 .vscode/
+/appium_test/venv
 
 # Flutter repo-specific
 /bin/cache/
