@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:auto_route/auto_route.dart';
+import 'package:dmvgenie/src/common/widgets/hide_keyboard_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -38,11 +39,18 @@ class _ProfileViewState extends State<ProfileView> {
   UserProfileModel? _user;
   bool _isEditing = false;
   File? _selectedImage;
+  String _nameValue = '';
+  String _phoneNumberValue = '';
 
-  void _handleUpdateProfile() async {
+  void _handleUpdateProfile() {
+    // Ẩn keyboard trước khi xử lý
+    FocusManager.instance.primaryFocus?.unfocus();
+    SystemChannels.textInput.invokeMethod('TextInput.hide');
+
     final name = _nameController.text.trim();
     final phoneNumber = _phoneController.text.trim();
 
+    // Validation
     if (name.isEmpty) {
       AppDialogs.showSnackBar(
         message: 'Name cannot be empty',
@@ -60,6 +68,17 @@ class _ProfileViewState extends State<ProfileView> {
       return;
     }
 
+    // Kiểm tra xem có thay đổi gì không
+    if (name == _nameValue && phoneNumber == _phoneNumberValue) {
+      // Không có thay đổi, chỉ tắt edit mode
+      setState(() {
+        _isEditing = false;
+      });
+      return;
+    }
+
+    // Gọi API update profile
+    // Edit mode sẽ được tắt trong BlocListener khi updateProfileSuccess
     context.read<SettingsCubit>().updateProfile(
           name: name,
           phoneNumber: phoneNumber,
@@ -69,7 +88,21 @@ class _ProfileViewState extends State<ProfileView> {
   @override
   void initState() {
     super.initState();
-    context.read<SettingsCubit>().loadSettings();
+    // Chỉ load nếu chưa có data (state là initial hoặc error)
+    // Nếu đã có data từ Settings page thì dùng luôn
+    final currentState = context.read<SettingsCubit>().state;
+    currentState.maybeWhen(
+      loaded: (_, __, user, ___) {
+        // Đã có data, populate fields ngay
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _populateFields(user);
+        });
+      },
+      orElse: () {
+        // Chưa có data, load lại
+        context.read<SettingsCubit>().loadSettings();
+      },
+    );
   }
 
   @override
@@ -82,9 +115,11 @@ class _ProfileViewState extends State<ProfileView> {
 
   void _populateFields(UserProfileModel? user) {
     if (user != null) {
-      _nameController.text = user.name;
+      _nameValue = user.name;
       _emailController.text = user.email;
-      _phoneController.text = user.phoneNumber;
+      _phoneNumberValue = user.phoneNumber;
+      _nameController.text = _nameValue;
+      _phoneController.text = _phoneNumberValue;
       _user = user;
     }
   }
@@ -100,6 +135,24 @@ class _ProfileViewState extends State<ProfileView> {
                 _populateFields(user);
               },
               error: (message) {
+                AppDialogs.showSnackBar(
+                  message: message,
+                  backgroundColor: Colors.redAccent,
+                );
+              },
+              updateProfileSuccess: (user) {
+                _populateFields(user);
+                // Tắt edit mode khi update thành công
+                setState(() {
+                  _isEditing = false;
+                });
+                AppDialogs.showSnackBar(
+                  message: 'Profile updated successfully',
+                  backgroundColor: Colors.green,
+                );
+              },
+              updatedProfileFailure: (message) {
+                // Giữ edit mode khi update thất bại để user có thể sửa lại
                 AppDialogs.showSnackBar(
                   message: message,
                   backgroundColor: Colors.redAccent,
@@ -125,31 +178,33 @@ class _ProfileViewState extends State<ProfileView> {
               },
               orElse: () {});
         },
-        child: SafeArea(
-          child: Column(
-            children: [
-              // Header
-              _buildHeader(),
+        child: HideKeyboardOnTap(
+          child: SafeArea(
+            child: Column(
+              children: [
+                // Header
+                _buildHeader(),
 
-              // Profile Content
-              Expanded(
-                child: BlocBuilder<SettingsCubit, SettingsState>(
-                  builder: (context, state) {
-                    return state.maybeWhen(
-                      initial: () => _buildProfileContent(),
-                      loading: () =>
-                          const Center(child: LoadingWidget.medium()),
-                      loaded: (_, __, user, ___) {
-                        _populateFields(user);
-                        return _buildProfileContent();
-                      },
-                      error: (message) => _buildErrorContent(message),
-                      orElse: () => _buildProfileContent(),
-                    );
-                  },
+                // Profile Content
+                Expanded(
+                  child: BlocBuilder<SettingsCubit, SettingsState>(
+                    builder: (context, state) {
+                      return state.maybeWhen(
+                        initial: () => _buildProfileContent(),
+                        loading: () =>
+                            const Center(child: LoadingWidget.medium()),
+                        loaded: (_, __, user, ___) {
+                          _populateFields(user);
+                          return _buildProfileContent();
+                        },
+                        error: (message) => _buildErrorContent(message),
+                        orElse: () => _buildProfileContent(),
+                      );
+                    },
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -200,14 +255,26 @@ class _ProfileViewState extends State<ProfileView> {
           ),
           const Spacer(),
           GestureDetector(
-            onTap: () {
+            behavior: HitTestBehavior.opaque,
+            onTap: () async {
               HapticFeedback.lightImpact();
+
+              // Ẩn keyboard ngay lập tức
+              FocusManager.instance.primaryFocus?.unfocus();
+              await SystemChannels.textInput.invokeMethod('TextInput.hide');
+
+              // Delay một chút để đảm bảo keyboard đã ẩn
+              await Future.delayed(const Duration(milliseconds: 100));
+
               if (_isEditing) {
+                // Đang ở chế độ edit, click để save
                 _handleUpdateProfile();
+              } else {
+                // Đang ở chế độ view, click để edit
+                setState(() {
+                  _isEditing = true;
+                });
               }
-              setState(() {
-                _isEditing = !_isEditing;
-              });
             },
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),

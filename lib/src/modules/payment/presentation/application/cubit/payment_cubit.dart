@@ -28,7 +28,7 @@ import 'package:dmvgenie/src/modules/payment/presentation/application/cubit/paym
 /// emit(Initial) after delay
 /// ```
 
-@injectable
+@Singleton()
 class PaymentCubit extends Cubit<PaymentState> {
   final PaymentRepository _paymentRepository;
 
@@ -40,29 +40,6 @@ class PaymentCubit extends Cubit<PaymentState> {
   })  : _paymentRepository = paymentRepository,
         super(const PaymentState.initial());
 
-  /// 🎫 **getPaymentLink** - Lấy QR code thanh toán
-  ///
-  /// Flow:
-  /// 1. Emit Loading state
-  /// 2. Gọi repository để fetch payment link từ API
-  /// 3. Parse registrationLink để extract payment info
-  /// 4. Emit PaymentLinkReceived state với parsed info
-  /// 5. If error: emit PaymentError state
-  ///
-  /// Parameters:
-  ///   - planId: ID của gói dịch vụ
-  ///   - planName: Tên gói (BASIC, PREMIUM, etc)
-  ///
-  /// Exceptions:
-  ///   - DioException: Network error, timeout, etc
-  ///   - FormatException: URL parse error
-  ///   - Generic Exception: Unexpected error
-  ///
-  /// Example:
-  /// ```dart
-  /// await paymentCubit.getPaymentLink(planId: 5, planName: "PREMIUM");
-  /// // State changes: Initial → Loading → PaymentLinkReceived
-  /// ```
   Future<void> getPaymentLink({
     required int planId,
     required String planName,
@@ -94,45 +71,28 @@ class PaymentCubit extends Cubit<PaymentState> {
     }
   }
 
-  /// 💬 **listenForPaymentSuccess** - Setup listener cho payment success
-  ///
-  /// Flow:
-  /// 1. Emit WaitingForPayment state
-  /// 2. Call repository để connect socket
-  /// 3. Register callback cho payment success event
-  /// 4. If success event received: Emit PaymentSuccess
-  /// 5. If socket error: Emit PaymentError
-  ///
-  /// Socket Events:
-  /// - paymentSuccess: Triggered khi backend xác nhận thanh toán
-  ///   Data: { status: "success", subscription: {...} }
-  /// - connect_error: Socket connection failed
-  /// - disconnect: Socket disconnected
-  ///
-  /// Timeout:
-  /// - 10 phút: Nếu ko nhận được success, auto emit error
-  ///
-  /// Example:
-  /// ```dart
-  /// await paymentCubit.listenForPaymentSuccess(planId: 5);
-  /// // Socket connects, waiting for payment...
-  /// // When backend emit paymentSuccess → PaymentSuccess state
-  /// ```
   Future<void> listenForPaymentSuccess({required int planId}) async {
+    print('🔌🔌🔌🔌🔌🔌🔌🔌🔌🔌🔌🔌🔌🔌🔌🔌🔌🔌🔌🔌');
+    print('🔌 PaymentCubit.listenForPaymentSuccess() CALLED!');
+    print('   Plan ID: $planId');
+    print('🔌🔌🔌🔌🔌🔌🔌🔌🔌🔌🔌🔌🔌🔌🔌🔌🔌🔌🔌🔌');
+
     try {
       // 1️⃣ Emit waiting state
-      print('⏳ Waiting for payment confirmation...');
-      print('   Emitting: PaymentState.waitingForPayment(planId: $planId)');
+      print('⏳ Step 1: Emitting waitingForPayment state...');
+      print('   Plan ID: $planId');
       emit(PaymentState.waitingForPayment(planId: planId.toString()));
-      print('   ✅ waitingForPayment state emitted!');
+      print('   ✅✅✅ waitingForPayment state emitted successfully!');
 
       // 2️⃣ Register payment success listener
       // This will setup socket connection và register callbacks
+      print('🔌🔌🔌 PaymentCubit: Registering payment success listener...');
       await _paymentRepository.registerPaymentSuccessListener(
         // ✅ Success callback
         onSuccess: (data) {
           try {
-            print('✨ Payment success received: $data');
+            print('✨✨✨ PaymentCubit: Payment success received!');
+            print('   Data: $data');
 
             // Parse subscription từ socket event
             // Socket event có structure:
@@ -148,17 +108,27 @@ class PaymentCubit extends Cubit<PaymentState> {
                 data['message'] as String? ?? 'Thanh toán thành công!';
 
             // 🎉 Emit success state với subscription data
+            print('🎉🎉🎉 PaymentCubit: Emitting PaymentSuccess state');
+            print('   Message: $message');
+            print('   Subscription: $subscription');
             emit(
               PaymentState.paymentSuccess(
                 message: message,
                 subscription: subscription,
               ),
             );
+            print(
+                '✅✅✅ PaymentCubit: PaymentSuccess state emitted successfully!');
 
-            // 🔄 Auto reset sau 3 giây
-            Future.delayed(const Duration(seconds: 3), () {
+            // 🔄 Auto reset sau 5 giây (đủ thời gian để user thấy success message)
+            // KHÔNG reset nếu modal đã đóng (để tránh conflict)
+            Future.delayed(const Duration(seconds: 5), () {
               if (!isClosed) {
+                print(
+                    '🔄 PaymentCubit: Auto resetting to initial state after 5 seconds');
                 emit(const PaymentState.initial());
+              } else {
+                print('⚠️ PaymentCubit: Skipping auto reset - cubit is closed');
               }
             });
           } catch (e) {
@@ -196,31 +166,17 @@ class PaymentCubit extends Cubit<PaymentState> {
           );
         }
       });
-    } catch (e) {
-      print('❌ Error setting up payment listener: $e');
+    } catch (e, stackTrace) {
+      print('❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌');
+      print('❌ ERROR in PaymentCubit.listenForPaymentSuccess()!');
+      print('   Error: $e');
+      print('   Stack trace: $stackTrace');
+      print('❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌');
       final errorMessage = _getErrorMessage(e);
       emit(PaymentState.paymentError(error: errorMessage));
     }
   }
 
-  /// 🔌 **cleanup** - Cleanup socket connection
-  ///
-  /// Gọi khi user đóng payment modal
-  /// Prevent memory leak bằng cách:
-  /// - Remove socket listeners
-  /// - Disconnect socket
-  /// - Reset state
-  ///
-  /// Important: Gọi này ở trong useEffect/dispose của payment modal
-  ///
-  /// Example:
-  /// ```dart
-  /// @override
-  /// void dispose() {
-  ///   paymentCubit.cleanup();
-  ///   super.dispose();
-  /// }
-  /// ```
   Future<void> cleanup() async {
     try {
       print('🧹 Cleaning up payment resources...');
@@ -228,9 +184,26 @@ class PaymentCubit extends Cubit<PaymentState> {
       // Unregister listeners và disconnect socket
       await _paymentRepository.unregisterPaymentListener();
 
-      // Reset state
+      // KHÔNG reset state ở đây - để user thấy success message
+      // State sẽ được reset khi modal đóng hoặc sau 5 giây (auto reset)
+      // Chỉ reset nếu đang ở trạng thái waiting hoặc error
       if (!isClosed) {
-        emit(const PaymentState.initial());
+        final currentState = state;
+        currentState.maybeWhen(
+          waitingForPayment: (_) {
+            print('🔄 Resetting from waitingForPayment to initial');
+            emit(const PaymentState.initial());
+          },
+          paymentError: (_, __) {
+            print('🔄 Resetting from paymentError to initial');
+            emit(const PaymentState.initial());
+          },
+          orElse: () {
+            print(
+                '⚠️ Skipping state reset - current state: ${currentState.runtimeType}');
+            print('   Keeping state so user can see success message');
+          },
+        );
       }
 
       print('✅ Cleanup completed');
@@ -239,10 +212,6 @@ class PaymentCubit extends Cubit<PaymentState> {
     }
   }
 
-  /// 🔄 **reset** - Manually reset state to initial
-  ///
-  /// Gọi để reset state mà không cleanup socket
-  /// Dùng khi user retry sau lỗi
   void reset() {
     print('🔄 Resetting payment state');
     if (!isClosed) {
@@ -250,10 +219,6 @@ class PaymentCubit extends Cubit<PaymentState> {
     }
   }
 
-  /// 📝 **_getErrorMessage** - Transform exception thành user-friendly message
-  ///
-  /// Maps technical errors thành Vietnamese messages
-  /// Dùng trong error handling
   String _getErrorMessage(dynamic error) {
     final errorString = error.toString().toLowerCase();
 

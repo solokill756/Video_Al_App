@@ -3,6 +3,8 @@ import 'package:dmvgenie/src/modules/payment/data/model/payment_model.dart';
 import 'package:dmvgenie/src/modules/payment/data/remote/payment_api_service.dart';
 import 'package:dmvgenie/src/modules/payment/data/remote/payment_socket_service.dart';
 import 'package:dmvgenie/src/modules/payment/domain/repository/payment_repository.dart';
+import '../../../../common/utils/app_environment.dart';
+import '../../../../core/data/local/storage.dart';
 
 /// 🔧 **PaymentRepositoryImpl** - Concrete implementation của PaymentRepository
 ///
@@ -32,27 +34,6 @@ class PaymentRepositoryImpl implements PaymentRepository {
   })  : _paymentApiService = paymentApiService,
         _paymentSocketService = paymentSocketService;
 
-  /// 🎫 **getPaymentLink** - Lấy QR code thanh toán từ backend
-  ///
-  /// Flow:
-  /// 1. Gọi API endpoint: POST /payment/link-registration
-  /// 2. Pass planId trong body
-  /// 3. Backend tạo QR code qua SePayVN gateway
-  /// 4. Trả về registration link (URL)
-  /// 5. Frontend parse URL để extract payment info
-  ///
-  /// Example Response:
-  /// ```
-  /// {
-  ///   "registrationLink": "https://qr.sepay.vn/img?acc=888852690888&bank=VietinBank&amount=4000&des=SEVQR%20DHXXX1XXX5"
-  /// }
-  /// ```
-  ///
-  /// Parse logic:
-  /// - acc: Số tài khoản nhận tiền
-  /// - bank: Ngân hàng
-  /// - amount: Số tiền (VND)
-  /// - des: Nội dung chuyển khoản (QUAN TRỌNG - phải nhập chính xác)
   @override
   Future<PaymentLinkResponse> getPaymentLink({
     required int planId,
@@ -115,42 +96,68 @@ class PaymentRepositoryImpl implements PaymentRepository {
     try {
       print('🔌 Registering payment success listener...');
 
-      // TODO: Get base URL từ environment config
-      // const baseUrl = 'http://localhost:3000';
+      // Get base URL từ environment config
+      // Remove '/api' suffix for socket connection
+      var baseUrl = AppEnvironment.apiUrl;
+      if (baseUrl.isEmpty) {
+        throw Exception('API URL is not configured in .env file');
+      }
 
-      // TODO: Get auth token từ auth cubit hoặc secure storage
-      // final token = 'Bearer ...';
+      // Remove '/api' from URL if present (socket doesn't need it)
+      if (baseUrl.endsWith('/api')) {
+        baseUrl = baseUrl.substring(0, baseUrl.length - 4);
+      } else if (baseUrl.endsWith('/api/')) {
+        baseUrl = baseUrl.substring(0, baseUrl.length - 5);
+      }
 
-      // Tạm thời mock URL và token
-      const baseUrl = 'http://localhost:3000';
-      const token = 'Bearer mock-token';
+      // Get auth token từ secure storage
+      final accessToken = await Storage.accessToken;
+      if (accessToken == null || accessToken.isEmpty) {
+        throw Exception('Access token not found. Please login first.');
+      }
+      final token = 'Bearer $accessToken';
+
+      print('🔌🔌🔌 Socket config:');
+      print('  - baseUrl: $baseUrl');
+      print('  - token: ${token.substring(0, 20)}...');
+      print('  - Full token length: ${token.length}');
 
       // Register error callback nếu có
       if (onError != null) {
         _paymentSocketService.onPaymentError((error) {
-          print('❌ Payment socket error: $error');
+          print('❌❌❌ Payment socket error callback: $error');
           onError(error);
         });
 
         _paymentSocketService.onConnectError((error) {
-          print('❌ Socket connection error: $error');
+          print('❌❌❌ Socket connection error callback: $error');
           onError(error);
         });
       }
 
       // Register success callback
       _paymentSocketService.onPaymentSuccess((data) {
-        print('✅ Payment success event received: $data');
+        print('✅✅✅ PaymentRepository: Payment success event received!');
+        print('   Data: $data');
+        print('   Data type: ${data.runtimeType}');
         onSuccess(data);
+        print('✅✅✅ PaymentRepository: onSuccess callback executed');
+      });
+
+      // Register connect callback để debug
+      _paymentSocketService.onConnect(() {
+        print('✅✅✅ PaymentRepository: Socket connected successfully!');
       });
 
       // Connect tới socket server
+      print('🔌🔌🔌 Connecting to socket server...');
       await _paymentSocketService.connect(
         baseUrl: baseUrl,
         token: token,
       );
 
-      print('✅ Payment listener registered');
+      print('✅✅✅ Payment listener registered and socket connection initiated');
+      print('   Waiting for socket connection...');
     } catch (e) {
       print('❌ Error registering payment listener: $e');
       onError?.call(e.toString());

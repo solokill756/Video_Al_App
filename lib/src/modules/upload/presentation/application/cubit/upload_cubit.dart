@@ -2,10 +2,12 @@ import 'dart:io';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:injectable/injectable.dart';
 
 import '../../../domain/repository/upload_repository.dart';
 import 'upload_state.dart';
 
+@Singleton()
 class UploadCubit extends Cubit<UploadState> {
   final UploadRepository uploadRepository;
 

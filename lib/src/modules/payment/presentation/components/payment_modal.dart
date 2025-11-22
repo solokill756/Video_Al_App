@@ -57,6 +57,12 @@ class _PaymentModalState extends State<PaymentModal> {
   /// ✂️ Field được copy gần nhất (để highlight + show feedback)
   String? _copiedField;
 
+  /// 🔌 PaymentCubit reference để cleanup socket
+  PaymentCubit? _paymentCubit;
+
+  /// ✅ Flag để track payment success (để hiển thị success UI ngay cả khi state bị reset)
+  bool _hasPaymentSucceeded = false;
+
   @override
   void initState() {
     super.initState();
@@ -82,6 +88,13 @@ class _PaymentModalState extends State<PaymentModal> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Cache PaymentCubit reference for cleanup
+    _paymentCubit = context.read<PaymentCubit>();
+  }
+
+  @override
   void didUpdateWidget(PaymentModal oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.isOpen != widget.isOpen && widget.isOpen) {
@@ -101,25 +114,48 @@ class _PaymentModalState extends State<PaymentModal> {
   /// 🔌 **_setupSocketListener** - Setup socket listening
   ///
   /// When modal opens:
-  /// 1. Listen for paymentSuccess event
-  /// 2. Auto redirect when success
+  /// 1. Socket connection is already setup by PaymentCubit.listenForPaymentSuccess()
+  ///    called from parent widget when paymentLinkReceived state is emitted
+  /// 2. This method is kept for reference but socket setup is handled externally
+  ///
+  /// Note: Socket connection happens in parent widget (pricing_page, etc)
+  /// when PaymentState.paymentLinkReceived is received
   void _setupSocketListener() {
-    // The PaymentCubit already handles socket setup
-    // via listenForPaymentSuccess() call in parent widget
-    // This method is just placeholder for cleanup reference
-    print('🔌 Socket listener setup handled by PaymentCubit');
+    print('🔌 PaymentModal: Socket listener setup handled by PaymentCubit');
+    print(
+        '   Socket connection is managed by PaymentCubit.listenForPaymentSuccess()');
   }
 
   /// 🔌 **_cleanupSocket** - Cleanup socket connection
   ///
   /// When modal closes:
-  /// 1. Unregister listeners
-  /// 2. Disconnect socket
-  /// 3. Release resources
+  /// 1. Unregister socket listeners
+  /// 2. Disconnect socket connection
+  /// 3. Reset payment state
+  /// 4. Release resources to prevent memory leaks
+  ///
+  /// Important: This must be called when:
+  /// - User closes modal manually
+  /// - Payment succeeds and modal auto-closes
+  /// - Widget is disposed
   void _cleanupSocket() {
-    // The PaymentCubit handles cleanup via cleanup() method
-    // This method is just placeholder for reference
-    print('🔌 Socket cleanup handled by PaymentCubit');
+    try {
+      print('🔌 PaymentModal: Cleaning up socket connection...');
+
+      // Use cached PaymentCubit reference or get from context if available
+      final paymentCubit =
+          _paymentCubit ?? (mounted ? context.read<PaymentCubit>() : null);
+
+      if (paymentCubit != null) {
+        paymentCubit.cleanup();
+        print('✅ PaymentModal: Socket cleanup completed');
+      } else {
+        print('⚠️ PaymentModal: PaymentCubit not available for cleanup');
+      }
+    } catch (e) {
+      print('⚠️ PaymentModal: Error during socket cleanup: $e');
+      // Don't rethrow - cleanup should be best effort
+    }
   }
 
   /// 📝 **_parsePaymentLink** - Parse QR code URL to extract payment info
@@ -328,15 +364,22 @@ class _PaymentModalState extends State<PaymentModal> {
         state.whenOrNull(
           // ✅ Payment success
           paymentSuccess: (message, subscription) {
+            // Đánh dấu đã thành công
+            setState(() {
+              _hasPaymentSucceeded = true;
+            });
+
             showToast(
               '🎉 $message',
               position: ToastPosition.bottom,
               duration: const Duration(seconds: 2),
             );
 
-            // Auto close modal sau 2 giây
+            // Auto close modal sau 2 giây và cleanup socket
             Future.delayed(const Duration(seconds: 2), () {
               if (mounted) {
+                // Cleanup socket before closing
+                _cleanupSocket();
                 widget.onClose();
               }
             });
@@ -394,7 +437,11 @@ class _PaymentModalState extends State<PaymentModal> {
                             ),
                           ),
                           GestureDetector(
-                            onTap: widget.onClose,
+                            onTap: () {
+                              // Cleanup socket before closing
+                              _cleanupSocket();
+                              widget.onClose();
+                            },
                             child: Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
@@ -420,6 +467,11 @@ class _PaymentModalState extends State<PaymentModal> {
                             print('🎨 PaymentModal BlocBuilder rebuild:');
                             print('  - State: ${state.runtimeType}');
                             print('  - State: $state');
+
+                            // Nếu đã có payment success, luôn hiển thị success section
+                            if (_hasPaymentSucceeded) {
+                              return _buildSuccessSection();
+                            }
 
                             return state.whenOrNull(
                                   // ⏳ Waiting for payment
@@ -470,6 +522,7 @@ class _PaymentModalState extends State<PaymentModal> {
                                   // ✨ Payment success
                                   paymentSuccess: (message, subscription) =>
                                       _buildSuccessSection(),
+
                                   // ❌ Payment error
                                   paymentError: (error, errorCode) =>
                                       _buildErrorSection(error),
@@ -481,17 +534,48 @@ class _PaymentModalState extends State<PaymentModal> {
                                       ),
                                     ),
                                   ),
-                                  // Default
-                                  // ignore: avoid_returning_null_for_future
-                                  initial: () => const Center(
-                                    child: CircularProgressIndicator(
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                        Color(0xFF0D9488),
-                                      ),
-                                    ),
-                                  ),
+                                  // Default - Nếu state là initial, hiển thị waitingForPayment UI
+                                  // vì modal chỉ mở khi đã có payment link
+                                  initial: () {
+                                    print(
+                                        '⚠️ PaymentModal: State is initial, showing waiting UI');
+                                    return Column(
+                                      children: [
+                                        // QR Code
+                                        _buildQRCodeSection(),
+                                        const SizedBox(height: 20),
+                                        // Divider
+                                        Divider(
+                                          color: const Color(0xFFE2E8F0),
+                                        ),
+                                        const SizedBox(height: 16),
+                                        // Payment info
+                                        _buildPaymentInfoSection(),
+                                        const SizedBox(height: 16),
+                                        // Instructions
+                                        _buildInstructionsSection(),
+                                      ],
+                                    );
+                                  },
                                 ) ??
-                                const SizedBox();
+                                // Fallback: Hiển thị waiting UI nếu không match case nào
+                                Column(
+                                  children: [
+                                    // QR Code
+                                    _buildQRCodeSection(),
+                                    const SizedBox(height: 20),
+                                    // Divider
+                                    Divider(
+                                      color: const Color(0xFFE2E8F0),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    // Payment info
+                                    _buildPaymentInfoSection(),
+                                    const SizedBox(height: 16),
+                                    // Instructions
+                                    _buildInstructionsSection(),
+                                  ],
+                                );
                           },
                         ),
                       ),
@@ -863,7 +947,11 @@ class _PaymentModalState extends State<PaymentModal> {
           children: [
             Expanded(
               child: ElevatedButton(
-                onPressed: widget.onClose,
+                onPressed: () {
+                  // Cleanup socket before closing
+                  _cleanupSocket();
+                  widget.onClose();
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFE5E7EB),
                   foregroundColor: const Color(0xFF1F2937),

@@ -117,6 +117,27 @@ class PaymentSocketService {
       _setupEventListeners();
 
       print('✅ Payment socket created, waiting for connection...');
+
+      // Wait a bit and check connection status
+      Future.delayed(const Duration(seconds: 2), () {
+        if (_socket != null) {
+          print('🔍 Checking socket connection status after 2 seconds...');
+          print('   Socket ID: ${_socket?.id}');
+          print('   Is connected: ${_socket?.connected}');
+          print('   Is connecting: $_isConnecting');
+          print('   Is connected (internal): $_isConnected');
+
+          if (!_isConnected && !_isConnecting) {
+            print('⚠️⚠️⚠️ Socket not connected after 2 seconds!');
+            print('   This might indicate a connection problem.');
+            print('   Please check:');
+            print('   1. Backend socket server is running');
+            print('   2. URL is correct: $baseUrl$_paymentNamespace');
+            print('   3. Token is valid');
+            print('   4. Network connection is available');
+          }
+        }
+      });
     } catch (e) {
       _isConnecting = false;
       print('❌ Error connecting to payment socket: $e');
@@ -133,33 +154,48 @@ class PaymentSocketService {
   /// - paymentSuccess: Payment confirmed from backend
   /// - paymentError: Payment failed from backend
   void _setupEventListeners() {
-    if (_socket == null) return;
+    if (_socket == null) {
+      print('❌ PaymentSocketService: Socket is null, cannot setup listeners');
+      return;
+    }
+
+    print('🔌 PaymentSocketService: Setting up event listeners...');
 
     // ✅ Connected
     _socket!.on('connect', (_) {
       _isConnected = true;
       _isConnecting = false;
-      print('✅ Connected to payment socket');
+      print('✅✅✅ Connected to payment socket successfully!');
+      print('   Socket ID: ${_socket?.id}');
+      print('   Namespace: $_paymentNamespace');
       _onConnectCallback?.call();
     });
 
     // ❌ Disconnected
     _socket!.on('disconnect', (reason) {
       _isConnected = false;
-      print('❌ Disconnected from payment socket: $reason');
+      print('❌❌❌ Disconnected from payment socket: $reason');
       _onDisconnectCallback?.call(reason as String? ?? 'unknown');
     });
 
     // ⚠️ Connection error
     _socket!.on('connect_error', (error) {
       _isConnecting = false;
-      print('⚠️ Payment socket connection error: $error');
+      print('⚠️⚠️⚠️ Payment socket connection error: $error');
+      print('   Error type: ${error.runtimeType}');
       _onConnectErrorCallback?.call(error.toString());
+    });
+
+    // 📡 Listen to ALL events for debugging (remove in production)
+    _socket!.onAny((event, data) {
+      print('📡📡📡 Socket event received: $event');
+      print('   Data: $data');
+      print('   Data type: ${data.runtimeType}');
     });
 
     // 💰 Payment success event from backend
     _socket!.on('paymentSuccess', (data) {
-      print('✨ Received paymentSuccess event: $data');
+      print('✨✨✨ Received paymentSuccess event: $data');
       print('   Data type: ${data.runtimeType}');
 
       try {
@@ -173,25 +209,29 @@ class PaymentSocketService {
           // For now, create a default structure
           mapData = {
             'status': 'success',
-            'message': 'Thanh toán thành công!',
+            'message': 'Payment successful!',
             'subscription': null,
           };
         } else {
           print('⚠️ Unexpected paymentSuccess data type: ${data.runtimeType}');
           mapData = {
             'status': 'success',
-            'message': 'Thanh toán thành công!',
+            'message': 'Payment successful!',
             'subscription': null,
           };
         }
 
+        print('✅ Calling paymentSuccess callback with data: $mapData');
         _onPaymentSuccessCallback?.call(mapData);
+        print('✅ PaymentSuccess callback called successfully');
       } catch (e) {
         print('❌ Error parsing paymentSuccess data: $e');
+        print('   Stack trace: ${StackTrace.current}');
         // Fallback: Call with default success structure
+        print('⚠️ Using fallback success data');
         _onPaymentSuccessCallback?.call({
           'status': 'success',
-          'message': 'Thanh toán thành công!',
+          'message': 'Payment successful!',
           'subscription': null,
         });
       }

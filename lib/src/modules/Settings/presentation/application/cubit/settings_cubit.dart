@@ -10,19 +10,21 @@ import '../../../domain/repository/settings_repository.dart';
 part 'settings_state.dart';
 part 'settings_cubit.freezed.dart';
 
-@injectable
+@Singleton()
 class SettingsCubit extends Cubit<SettingsState> {
   final SettingsRepository _settingsRepository;
   SettingsCubit(this._settingsRepository)
       : super(const SettingsState.initial());
+  UserProfileModel? _user;
 
   /// Load settings from local storage
   Future<void> loadSettings() async {
     emit(const SettingsState.loading());
     final result = await _settingsRepository.getCurrentUser();
     result.fold((user) {
+      _user = user;
       emit(SettingsState.loaded(
-        user: user,
+        user: _user!,
       ));
     }, (error) {
       error.maybeWhen(
@@ -31,6 +33,61 @@ class SettingsCubit extends Cubit<SettingsState> {
           emit(SettingsState.error(error.message));
         },
       );
+    });
+  }
+
+  /// Reload settings silently (không emit loading state nếu đã có data)
+  /// Dùng khi muốn refresh data mà không làm gián đoạn UI
+  Future<void> reloadSettingsSilently() async {
+    // Lưu state hiện tại để giữ UI
+    final currentState = state;
+    bool? isNotificationEnabled;
+    bool? isAutoPlay;
+    String? twoFaLink;
+    bool wasLoaded = false;
+
+    // Kiểm tra xem state hiện tại có phải là loaded không
+    currentState.maybeWhen(
+      loaded: (notif, auto, user, twoFa) {
+        wasLoaded = true;
+        isNotificationEnabled = notif;
+        isAutoPlay = auto;
+        twoFaLink = twoFa;
+      },
+      orElse: () {
+        wasLoaded = false;
+      },
+    );
+
+    final result = await _settingsRepository.getCurrentUser();
+    result.fold((user) {
+      // Nếu trước đó đã có data, giữ nguyên các settings và chỉ cập nhật user
+      if (wasLoaded && isNotificationEnabled != null && isAutoPlay != null) {
+        emit(SettingsState.loaded(
+          isNotificationEnabled: isNotificationEnabled!,
+          isAutoPlay: isAutoPlay!,
+          user: user,
+          twoFaLink: twoFaLink,
+        ));
+      } else {
+        // Nếu chưa có data, emit loaded state bình thường
+        emit(SettingsState.loaded(
+          user: user,
+        ));
+      }
+    }, (error) {
+      // Nếu có lỗi và trước đó đã có data, giữ nguyên state cũ
+      if (wasLoaded) {
+        // Không emit error để không làm gián đoạn UI
+        print('⚠️ Error reloading settings silently: ${error.message}');
+      } else {
+        error.maybeWhen(
+          (code, message) => emit(SettingsState.error(error.message)),
+          orElse: () {
+            emit(SettingsState.error(error.message));
+          },
+        );
+      }
     });
   }
 

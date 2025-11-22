@@ -46,25 +46,84 @@ class _SettingsViewState extends State<SettingsView> {
   String _paymentLink = '';
 
   @override
-  void initState() {
-    super.initState();
-    context.read<SettingsCubit>().loadSettings();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       body: BlocListener<PaymentCubit, PaymentState>(
         listener: (context, paymentState) {
           paymentState.maybeWhen(
+            paymentSuccess: (message, subscription) {
+              print('🎉🎉🎉 SettingsPage: Payment success received!');
+              print('   Message: $message');
+              print('   Subscription: $subscription');
+
+              // 1. Hiển thị thông báo thành công ngay lập tức
+              ScaffoldMessenger.of(context).hideCurrentSnackBar();
+              AppDialogs.showSnackBar(
+                message: message.isNotEmpty
+                    ? message
+                    : 'Payment successful! Your plan has been activated.',
+                backgroundColor: Colors.green,
+                duration: const Duration(seconds: 3),
+              );
+
+              // 2. Đợi modal tự đóng (modal sẽ tự đóng sau 2 giây theo logic trong PaymentModal)
+              // Sau đó mới cleanup và reload settings
+              Future.delayed(const Duration(seconds: 3), () {
+                if (mounted) {
+                  // Cleanup payment socket sau khi modal đã đóng
+                  try {
+                    context.read<PaymentCubit>().cleanup();
+                    print('✅ Payment cleanup completed');
+                  } catch (e) {
+                    print('⚠️ Error during payment cleanup: $e');
+                  }
+
+                  // Reload user profile để cập nhật plan mới (silent reload - không hiển thị loading)
+                  Future.delayed(const Duration(milliseconds: 300), () {
+                    if (mounted) {
+                      print(
+                          '🔄 Reloading user settings after payment success (silently)...');
+                      context.read<SettingsCubit>().reloadSettingsSilently();
+                    }
+                  });
+                }
+              });
+            },
             paymentLinkReceived: (registrationLink, planId, planName) {
               setState(() {
                 _paymentLink = registrationLink;
                 _selectedPlanName = planName;
               });
-              Navigator.of(context).pop();
-              _showPaymentModal(context);
+
+              // Đóng bottom sheet nếu còn mở (an toàn hơn)
+              if (Navigator.of(context).canPop()) {
+                Navigator.of(context).pop();
+              }
+
+              // Setup socket listener để chờ payment success
+              print(
+                  '🔌🔌🔌 SettingsPage: Calling listenForPaymentSuccess()...');
+              print('   Plan ID: $planId (parsed: ${int.parse(planId)})');
+              try {
+                context.read<PaymentCubit>().listenForPaymentSuccess(
+                      planId: int.parse(planId),
+                    );
+                print(
+                    '✅✅✅ SettingsPage: listenForPaymentSuccess() called successfully');
+              } catch (e, stackTrace) {
+                print(
+                    '❌❌❌ SettingsPage: Error calling listenForPaymentSuccess()!');
+                print('   Error: $e');
+                print('   Stack trace: $stackTrace');
+              }
+
+              // Delay một chút để đảm bảo bottom sheet đã đóng hoàn toàn
+              Future.microtask(() {
+                if (mounted) {
+                  _showPaymentModal(context);
+                }
+              });
               ScaffoldMessenger.of(context).hideCurrentSnackBar();
             },
             paymentError: (error, errorCode) {
@@ -203,27 +262,9 @@ class _SettingsViewState extends State<SettingsView> {
       ),
       child: Row(
         children: [
-          GestureDetector(
-            onTap: () {
-              HapticFeedback.lightImpact();
-              Navigator.pop(context);
-            },
-            child: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF1F5F9),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Icon(
-                Icons.arrow_back_ios,
-                color: Color(0xFF64748B),
-                size: 20,
-              ),
-            ),
-          ),
           const SizedBox(width: 16),
           const Text(
-            'Cài đặt',
+            'Settings',
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -263,13 +304,31 @@ class _SettingsViewState extends State<SettingsView> {
                   ),
                   borderRadius: BorderRadius.circular(32),
                 ),
-                child: _avatarUrl != null
+                child: _avatarUrl != null && _avatarUrl!.isNotEmpty
                     ? ClipOval(
                         child: Image.network(
                           _avatarUrl!,
                           width: 64,
                           height: 64,
                           fit: BoxFit.cover,
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return const Center(
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
+                              ),
+                            );
+                          },
+                          errorBuilder: (context, error, stackTrace) {
+                            return const Icon(
+                              Icons.person,
+                              color: Colors.white,
+                              size: 32,
+                            );
+                          },
                         ),
                       )
                     : const Icon(
@@ -1112,6 +1171,8 @@ class _SettingsViewState extends State<SettingsView> {
   }
 
   void _showPaymentModal(BuildContext context) {
+    if (!mounted) return;
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -1121,7 +1182,9 @@ class _SettingsViewState extends State<SettingsView> {
           child: PaymentModal(
             isOpen: true,
             onClose: () {
-              Navigator.of(dialogContext).pop();
+              if (Navigator.of(dialogContext).canPop()) {
+                Navigator.of(dialogContext).pop();
+              }
             },
             planName: _selectedPlanName,
             registrationLink: _paymentLink,

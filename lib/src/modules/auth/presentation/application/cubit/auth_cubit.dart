@@ -6,7 +6,7 @@ import '../../../data/models/reset_password_request.dart';
 import '../../../domain/repository/auth_repository.dart';
 import 'auth_state.dart';
 
-@injectable
+@Singleton()
 class AuthCubit extends Cubit<AuthState> {
   final AuthRepository _authRepository;
 

@@ -21,7 +21,6 @@ import 'src/modules/Settings/presentation/application/cubit/settings_cubit.dart'
 import 'src/modules/app/app_router.dart';
 import 'src/modules/app/app_widget.dart';
 import 'src/modules/auth/presentation/application/cubit/auth_cubit.dart';
-import 'src/modules/upload/domain/repository/upload_repository.dart';
 import 'src/modules/upload/presentation/application/cubit/upload_cubit.dart';
 import 'src/modules/plan/presentation/application/cubit/plan_cubit.dart'
     as plan_cubit;
@@ -56,13 +55,13 @@ Future<void> main() async {
             BlocProvider(
               create: (context) => GetIt.instance<AuthCubit>(),
             ),
+            BlocProvider(create: (context) {
+              final settingsCubit = GetIt.instance<SettingsCubit>();
+              settingsCubit.loadSettings();
+              return settingsCubit;
+            }),
             BlocProvider(
-              create: (context) => GetIt.instance<SettingsCubit>(),
-            ),
-            BlocProvider(
-              create: (context) => UploadCubit(
-                uploadRepository: getIt<UploadRepository>(),
-              ),
+              create: (context) => getIt<UploadCubit>(),
             ),
             BlocProvider(
               create: (context) => getIt<plan_cubit.PlanCubit>(),

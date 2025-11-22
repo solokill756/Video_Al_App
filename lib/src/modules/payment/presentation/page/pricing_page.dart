@@ -207,9 +207,19 @@ class _PricingPageState extends State<PricingPage> {
         print('  ✅ Modal opened: _isPaymentModalOpen = $_isPaymentModalOpen');
 
         // Setup socket listener để chờ payment success
-        context.read<PaymentCubit>().listenForPaymentSuccess(
-              planId: int.parse(planId),
-            );
+        print('🔌🔌🔌 PricingPage: Calling listenForPaymentSuccess()...');
+        print('   Plan ID: $planId (parsed: ${int.parse(planId)})');
+        try {
+          context.read<PaymentCubit>().listenForPaymentSuccess(
+                planId: int.parse(planId),
+              );
+          print(
+              '✅✅✅ PricingPage: listenForPaymentSuccess() called successfully');
+        } catch (e, stackTrace) {
+          print('❌❌❌ PricingPage: Error calling listenForPaymentSuccess()!');
+          print('   Error: $e');
+          print('   Stack trace: $stackTrace');
+        }
       },
 
       // 🎉 Payment success

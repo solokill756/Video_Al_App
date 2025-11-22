@@ -5,7 +5,7 @@ import 'package:dmvgenie/src/modules/video_detail/domain/repository/video_detail
 
 import 'video_detail_state.dart';
 
-@injectable
+@Singleton()
 class VideoDetailCubit extends Cubit<VideoDetailState> {
   final VideoDetailRepository videoDetailRepository;
 
