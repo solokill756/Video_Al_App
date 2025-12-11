@@ -28,6 +28,9 @@ import 'src/modules/payment/presentation/application/cubit/payment_cubit.dart';
 import 'src/modules/video_list/presentation/application/cubit/video_cubit.dart'
     as video_list_cubit;
 import 'src/modules/video_detail/presentation/application/cubit/video_detail_cubit.dart';
+import 'src/modules/search/presentation/application/cubit/search_cubit.dart';
+import 'src/modules/ai_tutor/presentation/application/cubit/ai_tutor_cubit.dart';
+import 'src/modules/video_detail/presentation/application/cubit/private_search_cubit.dart';
 
 Future<void> main() async {
   runZonedGuarded(() async {
@@ -74,6 +77,15 @@ Future<void> main() async {
             ),
             BlocProvider(
               create: (context) => getIt<VideoDetailCubit>(),
+            ),
+            BlocProvider(
+              create: (context) => getIt<SearchCubit>(),
+            ),
+            BlocProvider(
+              create: (context) => getIt<AITutorCubit>()..loadConversations(),
+            ),
+            BlocProvider(
+              create: (context) => getIt<PrivateSearchCubit>(),
             ),
           ],
           child: const AppWidget(),

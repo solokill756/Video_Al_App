@@ -29,6 +29,8 @@ class UploadVideoView extends StatefulWidget {
 }
 
 class _UploadVideoViewState extends State<UploadVideoView> {
+  bool _hasHandledUploadSuccess = false;
+
   @override
   void initState() {
     super.initState();
@@ -38,6 +40,9 @@ class _UploadVideoViewState extends State<UploadVideoView> {
         statusBarIconBrightness: Brightness.dark,
       ),
     );
+
+    // Reset flag khi widget được tạo lại (khi quay lại trang)
+    _hasHandledUploadSuccess = false;
   }
 
   @override
@@ -46,13 +51,18 @@ class _UploadVideoViewState extends State<UploadVideoView> {
       listener: (context, state) {
         state.whenOrNull(
           uploadSuccess: (video) {
-            AppDialogs.showSnackBar(
-              message: 'Video uploaded successfully: ${video.title}',
-              backgroundColor: Colors.green,
-            );
-            Future.delayed(const Duration(seconds: 2), () {
-              if (mounted) context.router.back();
-            });
+            // Chỉ xử lý một lần để tránh trigger lại các action cũ
+            if (!_hasHandledUploadSuccess && mounted) {
+              _hasHandledUploadSuccess = true;
+              AppDialogs.showSnackBar(
+                message: 'Video uploaded successfully: ${video.title}',
+                backgroundColor: Colors.green,
+              );
+              // Không tự động back nữa, để user tự quyết định
+              // Future.delayed(const Duration(seconds: 2), () {
+              //   if (mounted) context.router.back();
+              // });
+            }
           },
           limitExceeded: (message) {
             // Show payment modal to upgrade plan

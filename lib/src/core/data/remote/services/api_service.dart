@@ -18,6 +18,15 @@ abstract class ApiModule {
   @Named('baseUrl')
   String get baseUrl => AppEnvironment.apiUrl;
 
+  @Named('searchApiUrl')
+  String get searchApiUrl => AppEnvironment.searchApiUrl;
+
+  @Named('privateSearchApiUrl')
+  String get privateSearchApiUrl => AppEnvironment.privateSearchApiUrl;
+
+  @Named('triggerPrivateSearchUrl')
+  String get triggerPrivateSearchUrl => AppEnvironment.triggerPrivateSearchUrl;
+
   @singleton
   Dio dio(
     @Named('baseUrl') String url,

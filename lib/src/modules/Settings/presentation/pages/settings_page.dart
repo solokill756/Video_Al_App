@@ -41,7 +41,6 @@ class _SettingsViewState extends State<SettingsView> {
   bool _autoPlay = true;
   bool _saveSearchHistory = true;
   bool _twoFactorAuth = false;
-  String? _avatarUrl;
   String _selectedPlanName = '';
   String _paymentLink = '';
 
@@ -144,8 +143,14 @@ class _SettingsViewState extends State<SettingsView> {
                     _notifications = isNotificationEnabled;
                     _autoPlay = isAutoPlay;
                     _twoFactorAuth = user.isEnable2FA;
-                    _avatarUrl = user.avatar;
                   });
+                },
+                uploadAvatarSuccess: (message) {
+                  // Reload settings để lấy avatar mới
+                  context.read<SettingsCubit>().loadSettings();
+                },
+                updateProfileSuccess: (user) {
+                  // Profile updated, BlocBuilder will rebuild with new user data
                 },
                 error: (message) {
                   AppDialogs.showSnackBar(
@@ -277,6 +282,9 @@ class _SettingsViewState extends State<SettingsView> {
   }
 
   Widget _buildProfileSection(UserProfileModel? user) {
+    // Lấy avatar từ user trực tiếp thay vì từ local state
+    final avatarUrl = user?.avatar;
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -304,10 +312,10 @@ class _SettingsViewState extends State<SettingsView> {
                   ),
                   borderRadius: BorderRadius.circular(32),
                 ),
-                child: _avatarUrl != null && _avatarUrl!.isNotEmpty
+                child: avatarUrl != null && avatarUrl.isNotEmpty
                     ? ClipOval(
                         child: Image.network(
-                          _avatarUrl!,
+                          avatarUrl,
                           width: 64,
                           height: 64,
                           fit: BoxFit.cover,
