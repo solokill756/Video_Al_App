@@ -1,4 +1,5 @@
 import 'package:bloc/bloc.dart';
+import 'package:dmvgenie/src/core/data/local/storage.dart';
 
 import 'package:flutter/foundation.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -18,22 +19,30 @@ class SettingsCubit extends Cubit<SettingsState> {
   UserProfileModel? _user;
 
   /// Load settings from local storage
-  Future<void> loadSettings() async {
-    emit(const SettingsState.loading());
-    final result = await _settingsRepository.getCurrentUser();
-    result.fold((user) {
-      _user = user;
-      emit(SettingsState.loaded(
-        user: _user!,
-      ));
-    }, (error) {
-      error.maybeWhen(
-        (code, message) => emit(SettingsState.error(error.message)),
-        orElse: () {
-          emit(SettingsState.error(error.message));
-        },
-      );
-    });
+  Future<void> loadSettings({bool isReload = false}) async {
+    if (isReload) {
+      emit(const SettingsState.loading());
+      final result = await _settingsRepository.getCurrentUser();
+      result.fold((user) {
+        _user = user;
+        emit(SettingsState.loaded(
+          user: _user!,
+        ));
+      }, (error) {
+        error.maybeWhen(
+          (code, message) => emit(SettingsState.error(error.message)),
+          orElse: () {
+            emit(SettingsState.error(error.message));
+          },
+        );
+      });
+    } else {
+      if (Storage.userProfile != null) {
+        emit(SettingsState.loaded(user: Storage.userProfile!));
+      } else {
+        emit(SettingsState.error('User not found'));
+      }
+    }
   }
 
   /// Reload settings silently (không emit loading state nếu đã có data)
@@ -148,7 +157,7 @@ class SettingsCubit extends Cubit<SettingsState> {
     );
     result.fold((user) {
       emit(SettingsState.updateProfileSuccess(user));
-      loadSettings();
+      loadSettings(isReload: true);
     }, (error) {
       error.maybeWhen(
         (code, message) =>
@@ -184,7 +193,7 @@ class SettingsCubit extends Cubit<SettingsState> {
     final result = await _settingsRepository.removeAvatar();
     result.fold((user) {
       emit(SettingsState.uploadAvatarSuccess('Avatar removed successfully'));
-      loadSettings();
+      loadSettings(isReload: true);
     }, (error) {
       error.maybeWhen(
         (code, message) =>

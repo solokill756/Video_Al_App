@@ -11,23 +11,11 @@ class PlanRepositoryImpl implements PlanRepository {
       : _planApiService = planApiService;
 
   @override
-  Future<PlanListResponse> getAllPlans({
-    required int pageIndex,
-    required int pageSize,
-  }) async {
-    final response = await _planApiService.getAllPlans(
-      pageIndex: pageIndex,
-      pageSize: pageSize,
-    );
-    final pagination = PaginationInfo(
-      totalItems: response.pagination.totalItems,
-      totalPages: response.pagination.totalPages,
-      pageSize: response.pagination.pageSize,
-      pageIndex: response.pagination.pageIndex,
-    );
+  Future<PlanListResponse> getAllPlans() async {
+    final response = await _planApiService.getAllPlans();
+
     return PlanListResponse(
-      data: response.data,
-      pagination: pagination,
+      plans: response.plans,
     );
   }
 

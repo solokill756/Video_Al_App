@@ -59,10 +59,9 @@ class _CustomAlertDialogState extends State<CustomAlertDialog> {
                   width: (MediaQuery.of(context).size.width * 0.8 - 40) / 2,
                   height: 45,
                   decoration: BoxDecoration(
-                    color: const Color(0xffe6e7e9),
+                    color: const Color(0xff1c1c1e),
                     borderRadius: BorderRadius.circular(5),
-                    border: Border.all(
-                        color: Theme.of(context).primaryColor, width: 2),
+                    border: Border.all(color: Color(0xffe6e7e9), width: 2),
                   ),
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   child: Center(
@@ -71,7 +70,7 @@ class _CustomAlertDialogState extends State<CustomAlertDialog> {
                       style: const TextStyle(
                         fontWeight: FontWeight.w700,
                         fontSize: 18,
-                        color: Colors.black,
+                        color: Colors.white,
                       ),
                     ),
                   ),
@@ -95,7 +94,7 @@ class _CustomAlertDialogState extends State<CustomAlertDialog> {
                       style: const TextStyle(
                         fontWeight: FontWeight.w700,
                         fontSize: 18,
-                        color: Colors.black,
+                        color: Colors.white,
                       ),
                     ),
                   ),

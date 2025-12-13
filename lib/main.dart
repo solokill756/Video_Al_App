@@ -59,11 +59,7 @@ Future<void> main() async {
             BlocProvider(
               create: (context) => GetIt.instance<AuthCubit>(),
             ),
-            BlocProvider(create: (context) {
-              final settingsCubit = GetIt.instance<SettingsCubit>();
-              settingsCubit.loadSettings();
-              return settingsCubit;
-            }),
+            BlocProvider(create: (context) => GetIt.instance<SettingsCubit>()),
             BlocProvider(
               create: (context) => getIt<UploadCubit>(),
             ),

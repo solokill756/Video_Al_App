@@ -15,11 +15,8 @@ class PlanCubit extends Cubit<PlanState> {
   Future<void> loadPlans({int pageIndex = 1, int pageSize = 10}) async {
     try {
       emit(const PlanState.loading());
-      final planListResponse = await planRepository.getAllPlans(
-        pageIndex: pageIndex,
-        pageSize: pageSize,
-      );
-      emit(PlanState.plansLoaded(plans: planListResponse.data));
+      final planListResponse = await planRepository.getAllPlans();
+      emit(PlanState.plansLoaded(plans: planListResponse.plans));
     } catch (e) {
       emit(PlanState.error(message: 'Lỗi tải danh sách gói dịch vụ: $e'));
     }

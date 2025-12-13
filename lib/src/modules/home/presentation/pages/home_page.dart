@@ -76,11 +76,6 @@ class _VideoSearchHomeState extends State<VideoSearchHomeView> {
 
                     const SizedBox(height: 32),
 
-                    // Content Analysis Option
-                    _buildContentAnalysisOption(),
-
-                    const SizedBox(height: 40),
-
                     // Call to Action Section
                     _buildCallToActionSection(),
 
@@ -386,89 +381,6 @@ class _VideoSearchHomeState extends State<VideoSearchHomeView> {
             Text(
               description,
               style: const TextStyle(
-                fontSize: 14,
-                color: Color(0xFF6B7280),
-                height: 1.4,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildContentAnalysisOption() {
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.mediumImpact();
-        _handleContentAnalysis();
-      },
-      child: Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.06),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
-          border: Border.all(
-            color: const Color(0xFFE2E8F0),
-            width: 1,
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                // Icon
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFDCFDF7),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(
-                    Icons.description_outlined,
-                    color: Color(0xFF059669),
-                    size: 24,
-                  ),
-                ),
-
-                const SizedBox(width: 16),
-
-                // Title
-                const Expanded(
-                  child: Text(
-                    'Content Analysis',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF1F2937),
-                    ),
-                  ),
-                ),
-
-                // Arrow
-                const Icon(
-                  Icons.arrow_forward_ios,
-                  color: Color(0xFF9CA3AF),
-                  size: 16,
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 12),
-
-            // Description
-            const Text(
-              'The system analyzes transcript, audio, and visuals to accurately find the content you need in the video.',
-              style: TextStyle(
                 fontSize: 14,
                 color: Color(0xFF6B7280),
                 height: 1.4,

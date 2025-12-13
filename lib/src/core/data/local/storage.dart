@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'package:dmvgenie/src/modules/Settings/data/model/user_profile_model.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:rx_shared_preferences/rx_shared_preferences.dart';
@@ -12,6 +14,7 @@ class _Keys {
   static const pushToken = 'push_token';
   static const ratingShown = 'rating_shown';
   static const isEnable2FA = 'is_enable_2fa';
+  static const userProfile = 'user_profile';
 }
 
 class Storage {
@@ -100,4 +103,23 @@ class Storage {
   static Future setIsEnable2FA(bool val) => _set(_Keys.isEnable2FA, val);
 
   static bool? get isEnable2FA => _get(_Keys.isEnable2FA);
+
+  static Future setUserProfile(UserProfileModel? val) {
+    if (val == null) {
+      return _prefs.remove(_Keys.userProfile);
+    }
+    final jsonString = jsonEncode(val.toJson());
+    return _prefs.setString(_Keys.userProfile, jsonString);
+  }
+
+  static UserProfileModel? get userProfile {
+    final jsonString = _prefs.getString(_Keys.userProfile);
+    if (jsonString == null) return null;
+    try {
+      final jsonMap = jsonDecode(jsonString) as Map<String, dynamic>;
+      return UserProfileModel.fromJson(jsonMap);
+    } catch (e) {
+      return null;
+    }
+  }
 }

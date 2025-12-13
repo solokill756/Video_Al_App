@@ -39,6 +39,7 @@ class AuthRepositoryImpl implements AuthRepository {
         await _settingsRepository.getCurrentUser().fold(
           (userProfile) async {
             await Storage.setIsEnable2FA(userProfile.isEnable2FA);
+            await Storage.setUserProfile(userProfile);
           },
           (error) async {
             await Storage.setIsEnable2FA(false);
