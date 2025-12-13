@@ -224,6 +224,7 @@ class _LoadingDialogManager {
     String? message,
     bool barrierDismissible = false,
     LoadingType type = LoadingType.pulse,
+    Color? backgroundColor,
   }) {
     if (_isShowing) return; // Không hiển thị nếu đã có dialog
 
@@ -231,7 +232,7 @@ class _LoadingDialogManager {
     showDialog(
       context: context,
       barrierDismissible: barrierDismissible,
-      barrierColor: Colors.black.withOpacity(0.5),
+      barrierColor: backgroundColor ?? Colors.black.withOpacity(0.5),
       builder: (dialogContext) => PopScope(
         canPop: barrierDismissible,
         child: Dialog(
@@ -273,12 +274,14 @@ extension LoadingDialogExtension on BuildContext {
     String? message,
     bool barrierDismissible = false,
     LoadingType type = LoadingType.pulse,
+    Color? backgroundColor,
   }) {
     _LoadingDialogManager.instance.show(
       this,
       message: message,
       barrierDismissible: barrierDismissible,
       type: type,
+      backgroundColor: backgroundColor,
     );
   }
 

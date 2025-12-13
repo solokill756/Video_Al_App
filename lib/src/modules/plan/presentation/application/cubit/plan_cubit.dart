@@ -5,7 +5,7 @@ import 'package:dmvgenie/src/modules/plan/domain/repository/plan_repository.dart
 
 import 'plan_state.dart';
 
-@injectable
+@Singleton()
 class PlanCubit extends Cubit<PlanState> {
   final PlanRepository planRepository;
 

@@ -31,4 +31,8 @@ abstract class UploadRepository {
     required String videoUrl,
     String? thumbnailUrl,
   });
+
+  /// Trigger AI processing for private video search
+  /// Fire-and-forget: không chờ response, không block user flow
+  Future<void> triggerPrivateSearch();
 }

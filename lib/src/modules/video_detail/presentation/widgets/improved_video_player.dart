@@ -6,11 +6,13 @@ import 'package:video_player/video_player.dart';
 class ImprovedVideoPlayer extends StatefulWidget {
   final String videoUrl;
   final String videoTitle;
+  final GlobalKey<_ImprovedVideoPlayerState>? playerKey;
 
   const ImprovedVideoPlayer({
     super.key,
     required this.videoUrl,
     required this.videoTitle,
+    this.playerKey,
   });
 
   @override
@@ -30,6 +32,14 @@ class _ImprovedVideoPlayerState extends State<ImprovedVideoPlayer> {
     _initializeVideoPlayer();
   }
 
+  /// Seek to specific timestamp (called from parent via GlobalKey)
+  void seekTo(Duration position) {
+    if (_isInitialized && _controller.value.isInitialized) {
+      _controller.seekTo(position);
+      _controller.play();
+    }
+  }
+
   void _initializeVideoPlayer() {
     try {
       if (widget.videoUrl.isEmpty) {
@@ -37,17 +47,31 @@ class _ImprovedVideoPlayerState extends State<ImprovedVideoPlayer> {
         return;
       }
 
-      _controller = VideoPlayerController.networkUrl(Uri.parse(widget.videoUrl))
-        ..initialize().then((_) {
-          setState(() => _isInitialized = true);
-          _controller.play();
-          // Add listener to update UI
-          _controller.addListener(() {
-            setState(() {});
-          });
+      // Try with basic headers for better compatibility
+      final headers = <String, String>{
+        'Range': 'bytes=0-', // Enable range requests for streaming
+        'Accept': '*/*', // Accept any content type
+      };
+
+      _controller = VideoPlayerController.networkUrl(
+        Uri.parse(widget.videoUrl),
+        httpHeaders: headers,
+      )..initialize().then((_) {
+          if (mounted) {
+            setState(() => _isInitialized = true);
+            _controller.play();
+            // Add listener to update UI
+            _controller.addListener(() {
+              if (mounted) {
+                setState(() {});
+              }
+            });
+          }
         }).catchError((error) {
           print('Video error: $error');
-          setState(() => _hasError = true);
+          if (mounted) {
+            setState(() => _hasError = true);
+          }
         });
     } catch (e) {
       print('Error: $e');
@@ -341,7 +365,9 @@ class _FullScreenVideoPlayerState extends State<_FullScreenVideoPlayer> {
 
     // Add listener to update UI when video plays
     widget.controller.addListener(() {
-      setState(() {});
+      if (mounted) {
+        setState(() {});
+      }
     });
   }
 

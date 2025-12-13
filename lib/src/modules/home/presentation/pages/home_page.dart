@@ -1,6 +1,17 @@
+import 'dart:io';
+
 import 'package:auto_route/auto_route.dart';
+import 'package:dmvgenie/src/common/widgets/loading_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:mime/mime.dart';
+import 'package:permission_handler/permission_handler.dart';
+
+import '../../../../common/dialogs/app_dialogs.dart';
+import '../../../../common/utils/getit_utils.dart';
+import '../../../app/app_router.dart';
+import '../../../search/domain/repository/search_repository.dart';
 
 @RoutePage()
 class VideoSearchHomePage extends StatelessWidget {
@@ -22,6 +33,9 @@ class VideoSearchHomeView extends StatefulWidget {
 class _VideoSearchHomeState extends State<VideoSearchHomeView> {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocus = FocusNode();
+  final ImagePicker _imagePicker = ImagePicker();
+  static const int maxImageSizeMB = 5;
+  static const int maxImageSizeBytes = maxImageSizeMB * 1024 * 1024;
 
   @override
   void dispose() {
@@ -702,23 +716,12 @@ class _VideoSearchHomeState extends State<VideoSearchHomeView> {
     if (query.trim().isEmpty) return;
 
     HapticFeedback.mediumImpact();
-
-    // Show loading
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => const Center(
-        child: CircularProgressIndicator(
-          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF0D9488)),
-        ),
+    context.router.push(
+      SearchResultsRoute(
+        query: query,
+        isImageSearch: false,
       ),
     );
-
-    // Simulate search
-    Future.delayed(const Duration(seconds: 2), () {
-      Navigator.pop(context);
-      _showSearchResults(query);
-    });
   }
 
   void _handleTextSearch() {
@@ -789,49 +792,128 @@ class _VideoSearchHomeState extends State<VideoSearchHomeView> {
     );
   }
 
-  void _pickImageFromCamera() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Opening camera...'),
-        backgroundColor: const Color(0xFF0D9488),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-      ),
-    );
+  Future<void> _pickImageFromCamera() async {
+    try {
+      await _checkPermissions();
+
+      final XFile? image = await _imagePicker.pickImage(
+        source: ImageSource.camera,
+        imageQuality: 85,
+      );
+
+      if (image != null) {
+        await _processImage(image.path);
+      }
+    } catch (e) {
+      AppDialogs.showSnackBar(
+        message: 'Error accessing camera: ${e.toString()}',
+        backgroundColor: Colors.red,
+      );
+    }
   }
 
-  void _pickImageFromGallery() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Opening gallery...'),
-        backgroundColor: const Color(0xFF7C3AED),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-      ),
-    );
+  Future<void> _pickImageFromGallery() async {
+    try {
+      await _checkPermissions();
+
+      final XFile? image = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 85,
+      );
+
+      if (image != null) {
+        await _processImage(image.path);
+      }
+    } catch (e) {
+      AppDialogs.showSnackBar(
+        message: 'Error accessing gallery: ${e.toString()}',
+        backgroundColor: Colors.red,
+      );
+    }
   }
 
-  void _showSearchResults(String query) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Searching: "$query"'),
-        backgroundColor: const Color(0xFF0D9488),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        action: SnackBarAction(
-          label: 'View Results',
-          textColor: Colors.white,
-          onPressed: () {
-            // Navigate to results page
-          },
-        ),
-      ),
+  Future<void> _checkPermissions() async {
+    final cameraStatus = await Permission.camera.status;
+    final photosStatus = await Permission.photos.status;
+
+    if (cameraStatus.isDenied) {
+      await Permission.camera.request();
+    }
+
+    if (photosStatus.isDenied) {
+      await Permission.photos.request();
+    }
+  }
+
+  Future<void> _processImage(String imagePath) async {
+    // Validate image
+    final file = File(imagePath);
+    if (!await file.exists()) {
+      AppDialogs.showSnackBar(
+        message: 'Cannot upload file, please try again later',
+        backgroundColor: Colors.red,
+      );
+      return;
+    }
+
+    // Check file size
+    final fileSize = await file.length();
+    if (fileSize > maxImageSizeBytes) {
+      AppDialogs.showSnackBar(
+        message: 'Image size must be less than $maxImageSizeMB MB',
+        backgroundColor: Colors.red,
+      );
+      return;
+    }
+
+    // Check file type
+    final mimeType = lookupMimeType(imagePath);
+    if (mimeType == null || !mimeType.startsWith('image/')) {
+      AppDialogs.showSnackBar(
+        message: 'Cannot upload file, please try again later',
+        backgroundColor: Colors.red,
+      );
+      return;
+    }
+
+    // Show loading
+    context.showLoadingDialog(
+      message: 'Uploading image...',
+      type: LoadingType.circular,
+      backgroundColor: Colors.white,
+      barrierDismissible: false,
     );
+
+    try {
+      // Upload image using repository
+      final repository = getIt<SearchRepository>();
+      final result = await repository.uploadImage(filePath: imagePath);
+
+      result.fold(
+        (imageUrl) {
+          context.hideLoadingDialog();
+          // Navigate to search results
+          context.router.push(
+            SearchResultsRoute(
+              imageUrl: imageUrl,
+              isImageSearch: true,
+            ),
+          );
+        },
+        (error) {
+          context.hideLoadingDialog();
+          AppDialogs.showSnackBar(
+            message: error.message,
+            backgroundColor: Colors.red,
+          );
+        },
+      );
+    } catch (e) {
+      context.hideLoadingDialog();
+      AppDialogs.showSnackBar(
+        message: 'Cannot upload file, please try again later',
+        backgroundColor: Colors.red,
+      );
+    }
   }
 }

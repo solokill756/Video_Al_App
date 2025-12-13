@@ -5,7 +5,7 @@ import 'package:dmvgenie/src/modules/video_list/domain/repository/video_list_rep
 
 import 'video_state.dart';
 
-@injectable
+@Singleton()
 class VideoCubit extends Cubit<VideoState> {
   final VideoListRepository videoListRepository;
 

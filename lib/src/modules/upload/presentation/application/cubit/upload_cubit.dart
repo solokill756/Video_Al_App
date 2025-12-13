@@ -2,10 +2,12 @@ import 'dart:io';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:injectable/injectable.dart';
 
 import '../../../domain/repository/upload_repository.dart';
 import 'upload_state.dart';
 
+@Singleton()
 class UploadCubit extends Cubit<UploadState> {
   final UploadRepository uploadRepository;
 
@@ -102,6 +104,14 @@ class UploadCubit extends Cubit<UploadState> {
         videoUrl: videoUrl,
         thumbnailUrl: thumbnailUrl,
       );
+
+      // Step 6: Trigger AI processing for private search (fire-and-forget)
+      // Không await, không block user flow
+      uploadRepository.triggerPrivateSearch().catchError((error) {
+        // Silent fail - chỉ log, không ảnh hưởng user experience
+        print('⚠️ Failed to trigger private search (non-blocking): $error');
+      });
+
       emit(UploadState.uploadSuccess(video: video));
     } catch (e) {
       if (e.toString().contains('limit') || e.toString().contains('exceeded')) {

@@ -4,6 +4,7 @@ import 'package:retrofit/retrofit.dart';
 
 import '../../../../core/data/remote/base/api_response.dart';
 import '../model/video_model.dart';
+import '../../../video_detail/data/models/processing_log_model.dart';
 
 part 'video_api_service.g.dart';
 
@@ -59,6 +60,12 @@ abstract class VideoApiService {
   // Delete Video
   @DELETE('/videos/{videoId}')
   Future<StatusApiResponse> deleteVideo({
+    @Path('videoId') required String videoId,
+  });
+
+  // Get Processing Logs for Video
+  @GET('/processing-logs/videos/{videoId}')
+  Future<ProcessingLogsResponse> getProcessingLogs({
     @Path('videoId') required String videoId,
   });
 }

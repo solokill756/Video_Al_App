@@ -5,16 +5,19 @@ import 'package:injectable/injectable.dart';
 import '../../domain/repository/upload_repository.dart';
 import '../model/video_model.dart' as video_m;
 import '../remote/s3_upload_service.dart';
+import '../remote/trigger_private_search_service.dart';
 import '../remote/video_api_service.dart';
 
 @Injectable(as: UploadRepository)
 class UploadRepositoryImpl implements UploadRepository {
   final VideoApiService _videoApiService;
   final S3UploadService _s3UploadService;
+  final TriggerPrivateSearchService _triggerService;
 
   UploadRepositoryImpl(
     this._videoApiService,
     this._s3UploadService,
+    this._triggerService,
   );
 
   // ==================== Video Upload ====================
@@ -91,5 +94,11 @@ class UploadRepositoryImpl implements UploadRepository {
         if (thumbnailUrl != null) 'thumbnailUrl': thumbnailUrl,
       },
     );
+  }
+
+  @override
+  Future<void> triggerPrivateSearch() async {
+    // Fire-and-forget: không await, không throw error
+    _triggerService.triggerPrivateSearch();
   }
 }

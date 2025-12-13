@@ -78,11 +78,22 @@ class _Enable2FADialogState extends State<Enable2FADialog>
           orElse: () {},
         );
       },
-      buildWhen: (prev, current) =>
-          current is Settings2FALoadingLink ||
-          current is Settings2FALoadedLink ||
-          current is Settings2FAEnabling ||
-          current is Settings2FAError,
+      buildWhen: (prev, current) {
+        // Rebuild khi state là các state 2FA
+        final is2FAState = current is Settings2FALoadingLink ||
+            current is Settings2FALoadedLink ||
+            current is Settings2FAEnabling ||
+            current is Settings2FAError;
+        final was2FAState = prev is Settings2FALoadingLink ||
+            prev is Settings2FALoadedLink ||
+            prev is Settings2FAEnabling ||
+            prev is Settings2FAError;
+        
+        // Rebuild nếu:
+        // 1. State hiện tại là 2FA state (luôn rebuild khi có state 2FA)
+        // 2. HOẶC đây là lần đầu (prev không phải 2FA state) để đảm bảo dialog hiển thị ngay
+        return is2FAState || !was2FAState;
+      },
       builder: (context, state) {
         final bool isEnabling = state is Settings2FAEnabling;
         final isDarkMode = Theme.of(context).brightness == Brightness.dark;
@@ -416,18 +427,24 @@ class _Enable2FADialogState extends State<Enable2FADialog>
         size: 200.0,
         backgroundColor: Colors.white,
       ),
-      twoFAError: (message, previousUri) => QrImageView(
-        data: previousUri ?? '',
-        version: QrVersions.auto,
-        size: 200.0,
-        backgroundColor: Colors.white,
-      ),
+      twoFAError: (message, previousUri) => previousUri != null && previousUri.isNotEmpty
+          ? QrImageView(
+              data: previousUri,
+              version: QrVersions.auto,
+              size: 200.0,
+              backgroundColor: Colors.white,
+            )
+          : const SizedBox(
+              width: 200,
+              height: 200,
+              child: Center(
+                child: Icon(Icons.error_outline, color: Colors.redAccent, size: 40),
+              ),
+            ),
       orElse: () => const SizedBox(
         width: 200,
         height: 200,
-        child: Center(
-          child: Icon(Icons.error_outline, color: Colors.redAccent, size: 40),
-        ),
+        child: Center(child: CircularProgressIndicator()),
       ),
     );
   }

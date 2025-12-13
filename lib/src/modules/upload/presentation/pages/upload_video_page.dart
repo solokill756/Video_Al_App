@@ -7,6 +7,9 @@ import '../../../app/app_router.dart';
 import '../components/video_upload_widget.dart';
 import '../application/cubit/upload_cubit.dart';
 import '../application/cubit/upload_state.dart';
+import '../../../payment/presentation/application/cubit/payment_cubit.dart';
+import '../../../payment/presentation/application/cubit/payment_state.dart';
+import '../../../payment/presentation/components/payment_modal.dart';
 
 @RoutePage()
 class UploadVideoPage extends StatelessWidget {
@@ -26,6 +29,8 @@ class UploadVideoView extends StatefulWidget {
 }
 
 class _UploadVideoViewState extends State<UploadVideoView> {
+  bool _hasHandledUploadSuccess = false;
+
   @override
   void initState() {
     super.initState();
@@ -35,6 +40,9 @@ class _UploadVideoViewState extends State<UploadVideoView> {
         statusBarIconBrightness: Brightness.dark,
       ),
     );
+
+    // Reset flag khi widget được tạo lại (khi quay lại trang)
+    _hasHandledUploadSuccess = false;
   }
 
   @override
@@ -43,19 +51,22 @@ class _UploadVideoViewState extends State<UploadVideoView> {
       listener: (context, state) {
         state.whenOrNull(
           uploadSuccess: (video) {
-            AppDialogs.showSnackBar(
-              message: 'Video uploaded successfully: ${video.title}',
-              backgroundColor: Colors.green,
-            );
-            Future.delayed(const Duration(seconds: 2), () {
-              if (mounted) context.router.back();
-            });
+            // Chỉ xử lý một lần để tránh trigger lại các action cũ
+            if (!_hasHandledUploadSuccess && mounted) {
+              _hasHandledUploadSuccess = true;
+              AppDialogs.showSnackBar(
+                message: 'Video uploaded successfully: ${video.title}',
+                backgroundColor: Colors.green,
+              );
+              // Không tự động back nữa, để user tự quyết định
+              // Future.delayed(const Duration(seconds: 2), () {
+              //   if (mounted) context.router.back();
+              // });
+            }
           },
           limitExceeded: (message) {
-            AppDialogs.showSnackBar(
-              message: message,
-              backgroundColor: Colors.red,
-            );
+            // Show payment modal to upgrade plan
+            _showUpgradePlanModal(context, message);
           },
           error: (message) {
             AppDialogs.showSnackBar(
@@ -294,6 +305,130 @@ class _UploadVideoViewState extends State<UploadVideoView> {
           ),
         ],
       ),
+    );
+  }
+
+  void _showUpgradePlanModal(BuildContext context, String limitMessage) {
+    // Get payment cubit to fetch payment link
+    final paymentCubit = context.read<PaymentCubit>();
+
+    // Default to PREMIUM plan for upgrade
+    const planId = 3; // PREMIUM
+    const planName = 'PREMIUM';
+
+    // Trigger payment link fetch immediately
+    paymentCubit.getPaymentLink(
+      planId: planId,
+      planName: planName,
+    );
+
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext dialogContext) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 20),
+          child: MultiBlocListener(
+            listeners: [
+              BlocListener<PaymentCubit, PaymentState>(
+                listener: (context, paymentState) {
+                  paymentState.whenOrNull(
+                    paymentSuccess: (message, subscription) {
+                      Navigator.of(dialogContext).pop();
+                      AppDialogs.showSnackBar(
+                        message:
+                            'Plan upgraded successfully! You can now continue uploading.',
+                        backgroundColor: Colors.green,
+                      );
+                    },
+                    paymentError: (error, errorCode) {
+                      AppDialogs.showSnackBar(
+                        message: 'Payment failed: $error',
+                        backgroundColor: Colors.red,
+                      );
+                    },
+                  );
+                },
+              ),
+            ],
+            child: BlocBuilder<PaymentCubit, PaymentState>(
+              builder: (context, paymentState) {
+                return paymentState.whenOrNull(
+                      loading: () => const Center(
+                        child: CircularProgressIndicator(),
+                      ),
+                      paymentLinkReceived:
+                          (registrationLink, planId, planName) {
+                        return PaymentModal(
+                          isOpen: true,
+                          onClose: () {
+                            paymentCubit.cleanup();
+                            Navigator.of(dialogContext).pop();
+                          },
+                          planName: planName,
+                          registrationLink: registrationLink,
+                        );
+                      },
+                      waitingForPayment: (planId) {
+                        return Center(
+                          child: SingleChildScrollView(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(24),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  child: Column(
+                                    children: [
+                                      const CircularProgressIndicator(),
+                                      const SizedBox(height: 16),
+                                      const Text(
+                                        'Waiting for Payment...',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        'Complete your payment to upgrade',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.grey[600],
+                                        ),
+                                      ),
+                                      const SizedBox(height: 24),
+                                      ElevatedButton(
+                                        onPressed: () {
+                                          paymentCubit.cleanup();
+                                          Navigator.of(dialogContext).pop();
+                                        },
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Colors.grey[300],
+                                        ),
+                                        child: const Text('Cancel'),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ) ??
+                    const Center(
+                      child: CircularProgressIndicator(),
+                    );
+              },
+            ),
+          ),
+        );
+      },
     );
   }
 }

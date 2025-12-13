@@ -21,13 +21,17 @@ import 'src/modules/Settings/presentation/application/cubit/settings_cubit.dart'
 import 'src/modules/app/app_router.dart';
 import 'src/modules/app/app_widget.dart';
 import 'src/modules/auth/presentation/application/cubit/auth_cubit.dart';
-import 'src/modules/upload/domain/repository/upload_repository.dart';
 import 'src/modules/upload/presentation/application/cubit/upload_cubit.dart';
 import 'src/modules/plan/presentation/application/cubit/plan_cubit.dart'
     as plan_cubit;
+import 'src/modules/payment/presentation/application/cubit/payment_cubit.dart';
+import 'src/modules/video_detail/presentation/application/cubit/processing_logs_cubit.dart';
 import 'src/modules/video_list/presentation/application/cubit/video_cubit.dart'
     as video_list_cubit;
 import 'src/modules/video_detail/presentation/application/cubit/video_detail_cubit.dart';
+import 'src/modules/search/presentation/application/cubit/search_cubit.dart';
+import 'src/modules/ai_tutor/presentation/application/cubit/ai_tutor_cubit.dart';
+import 'src/modules/video_detail/presentation/application/cubit/private_search_cubit.dart';
 
 Future<void> main() async {
   runZonedGuarded(() async {
@@ -55,16 +59,19 @@ Future<void> main() async {
             BlocProvider(
               create: (context) => GetIt.instance<AuthCubit>(),
             ),
+            BlocProvider(create: (context) {
+              final settingsCubit = GetIt.instance<SettingsCubit>();
+              settingsCubit.loadSettings();
+              return settingsCubit;
+            }),
             BlocProvider(
-              create: (context) => GetIt.instance<SettingsCubit>(),
-            ),
-            BlocProvider(
-              create: (context) => UploadCubit(
-                uploadRepository: getIt<UploadRepository>(),
-              ),
+              create: (context) => getIt<UploadCubit>(),
             ),
             BlocProvider(
               create: (context) => getIt<plan_cubit.PlanCubit>(),
+            ),
+            BlocProvider(
+              create: (context) => getIt<PaymentCubit>(),
             ),
             BlocProvider(
               create: (context) => getIt<video_list_cubit.VideoCubit>(),
@@ -72,6 +79,16 @@ Future<void> main() async {
             BlocProvider(
               create: (context) => getIt<VideoDetailCubit>(),
             ),
+            BlocProvider(
+              create: (context) => getIt<SearchCubit>(),
+            ),
+            BlocProvider(
+              create: (context) => getIt<AITutorCubit>()..loadConversations(),
+            ),
+            BlocProvider(
+              create: (context) => getIt<PrivateSearchCubit>(),
+            ),
+            BlocProvider(create: (context) => getIt<ProcessingLogsCubit>()),
           ],
           child: const AppWidget(),
         ),

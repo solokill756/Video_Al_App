@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 enum BottomNavItem {
   home,
-  explore,
+  aiTutor,
   upload,
   settings,
 }
@@ -48,9 +48,9 @@ class _AppBottomNavigationBarState extends State<AppBottomNavigationBar> {
                 item: BottomNavItem.home,
               ),
               _buildNavItem(
-                icon: Icons.explore_rounded,
-                label: 'Explore',
-                item: BottomNavItem.explore,
+                icon: Icons.smart_toy_rounded,
+                label: 'AI Tutor',
+                item: BottomNavItem.aiTutor,
               ),
               _buildNavItem(
                 icon: Icons.add_circle_outline_rounded,

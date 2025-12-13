@@ -35,8 +35,18 @@ class _VideoListViewState extends State<VideoListView> {
     _scrollController = ScrollController();
     _scrollController.addListener(_onScroll);
 
-    // Load videos on init
-    context.read<VideoCubit>().loadUserVideos(refresh: true);
+    // Restore state nếu có cache, nếu không thì load mới
+    final currentState = context.read<VideoCubit>().state;
+    if (currentState.maybeWhen(
+      videosLoaded: (_, __, ___) => true,
+      orElse: () => false,
+    )) {
+      // Đã có state, restore lại
+      context.read<VideoCubit>().restoreListState();
+    } else {
+      // Chưa có state, load mới
+      context.read<VideoCubit>().loadUserVideos(refresh: true);
+    }
   }
 
   @override
@@ -65,7 +75,7 @@ class _VideoListViewState extends State<VideoListView> {
         elevation: 0,
         backgroundColor: Colors.transparent,
         leading: GestureDetector(
-          onTap: () => context.router.back(),
+          onTap: () => context.router.maybePop(),
           child: Container(
             margin: const EdgeInsets.all(8),
             decoration: BoxDecoration(
