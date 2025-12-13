@@ -43,6 +43,11 @@ class _SettingsViewState extends State<SettingsView> {
   bool _twoFactorAuth = false;
   String _selectedPlanName = '';
   String _paymentLink = '';
+  @override
+  void initState() {
+    context.read<SettingsCubit>().loadSettings();
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -173,6 +178,7 @@ class _SettingsViewState extends State<SettingsView> {
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       child: Column(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           const SizedBox(height: 24),
 
@@ -193,15 +199,15 @@ class _SettingsViewState extends State<SettingsView> {
 
                           const SizedBox(height: 32),
 
-                          // App Settings
-                          _buildAppSettings(),
+                          // // App Settings
+                          // _buildAppSettings(),
 
-                          const SizedBox(height: 24),
+                          // const SizedBox(height: 24),
 
-                          // Video Settings
-                          _buildVideoSettings(),
+                          // // Video Settings
+                          // _buildVideoSettings(),
 
-                          const SizedBox(height: 24),
+                          // const SizedBox(height: 24),
 
                           // Privacy & Security
                           _buildPrivacySettings(),
@@ -508,19 +514,17 @@ class _SettingsViewState extends State<SettingsView> {
                       ),
                       plansLoaded: (plans) {
                         // Filter out FREE plans - only show paid plans
-                        final paidPlans =
-                            plans.where((p) => p.planType != 'FREE').toList();
 
                         final children = <Widget>[];
-                        for (int i = 0; i < paidPlans.length; i++) {
+                        for (int i = 0; i < plans.length; i++) {
                           children.add(
                             Column(
                               children: [
                                 _buildUpgradePlanOption(
                                   context: context,
-                                  plan: paidPlans[i],
+                                  plan: plans[i],
                                 ),
-                                if (i < paidPlans.length - 1)
+                                if (i < plans.length - 1)
                                   const SizedBox(height: 12),
                               ],
                             ),
@@ -556,17 +560,29 @@ class _SettingsViewState extends State<SettingsView> {
     required BuildContext context,
     required Plan plan,
   }) {
-    // Extract features from plan.features map
+    // Extract features from plan.features map with formatted text
     final List<String> features = [];
     plan.features.forEach((key, value) {
-      if (value == true || (value is String && value.isNotEmpty)) {
-        // Use the key as feature text (assumes backend provides readable keys)
-        features.add(key.toString());
+      // Skip if value is false (không có tính năng này)
+      if (value == false) {
+        return;
+      }
+
+      // Include if: true, non-empty string, positive number, or null (unlimited)
+      if (value == true ||
+          value == null ||
+          (value is String && value.isNotEmpty) ||
+          (value is num && value > 0)) {
+        // Format feature text with readable label
+        String featureText = _formatFeatureText(key, value);
+        if (featureText.isNotEmpty) {
+          features.add(featureText);
+        }
       }
     });
 
     // Format price with comma separator
-    final priceFormatted = '${plan.price.toStringAsFixed(0)} VND';
+    final priceFormatted = _formatPrice(plan.price);
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -626,53 +642,68 @@ class _SettingsViewState extends State<SettingsView> {
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-          ...features.map((f) => Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.check_circle,
-                      color: Color(0xFF0D9488),
-                      size: 16,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        f,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: Color(0xFF6B7280),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              )),
-          const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-                _onUpgradePressed(context, plan.id, plan.name);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF0D9488),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: const Text(
-                'Choose Plan',
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 13,
+          // Features list with max height to prevent overflow
+          if (features.isNotEmpty)
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 120),
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: features
+                      .map((f) => Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 3),
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.check_circle,
+                                  color: Color(0xFF0D9488),
+                                  size: 14,
+                                ),
+                                const SizedBox(width: 6),
+                                Expanded(
+                                  child: Text(
+                                    f,
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Color(0xFF6B7280),
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ))
+                      .toList(),
                 ),
               ),
             ),
-          ),
+          if (plan.planType != 'FREE') ...[
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => _onUpgradePressed(context, plan.id, plan.name),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF0D9488),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: const Text(
+                  'Choose Plan',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -694,43 +725,43 @@ class _SettingsViewState extends State<SettingsView> {
         );
   }
 
-  Widget _buildAppSettings() {
-    return _buildSettingsSection(
-      title: 'App Settings',
-      children: [
-        _buildSwitchTile(
-          icon: Icons.notifications,
-          title: 'Notifications',
-          subtitle: 'Receive notifications about new videos',
-          value: _notifications,
-          onChanged: (value) {
-            setState(() {
-              _notifications = value;
-            });
-          },
-        ),
-      ],
-    );
-  }
+  // Widget _buildAppSettings() {
+  //   return _buildSettingsSection(
+  //     title: 'App Settings',
+  //     children: [
+  //       _buildSwitchTile(
+  //         icon: Icons.notifications,
+  //         title: 'Notifications',
+  //         subtitle: 'Receive notifications about new videos',
+  //         value: _notifications,
+  //         onChanged: (value) {
+  //           setState(() {
+  //             _notifications = value;
+  //           });
+  //         },
+  //       ),
+  //     ],
+  //   );
+  // }
 
-  Widget _buildVideoSettings() {
-    return _buildSettingsSection(
-      title: 'Video Settings',
-      children: [
-        _buildSwitchTile(
-          icon: Icons.play_arrow,
-          title: 'Auto Play',
-          subtitle: 'Automatically play the next video',
-          value: _autoPlay,
-          onChanged: (value) {
-            setState(() {
-              _autoPlay = value;
-            });
-          },
-        ),
-      ],
-    );
-  }
+  // Widget _buildVideoSettings() {
+  //   return _buildSettingsSection(
+  //     title: 'Video Settings',
+  //     children: [
+  //       _buildSwitchTile(
+  //         icon: Icons.play_arrow,
+  //         title: 'Auto Play',
+  //         subtitle: 'Automatically play the next video',
+  //         value: _autoPlay,
+  //         onChanged: (value) {
+  //           setState(() {
+  //             _autoPlay = value;
+  //           });
+  //         },
+  //       ),
+  //     ],
+  //   );
+  // }
 
   Widget _buildPrivacySettings() {
     return _buildSettingsSection(
@@ -747,29 +778,29 @@ class _SettingsViewState extends State<SettingsView> {
             );
           },
         ),
-        _buildSwitchTile(
-          icon: Icons.history,
-          title: 'Save Search History',
-          subtitle: 'Remember searched keywords',
-          value: _saveSearchHistory,
-          onChanged: (value) {
-            setState(() {
-              _saveSearchHistory = value;
-            });
-          },
-        ),
+        // _buildSwitchTile(
+        //   icon: Icons.history,
+        //   title: 'Save Search History',
+        //   subtitle: 'Remember searched keywords',
+        //   value: _saveSearchHistory,
+        //   onChanged: (value) {
+        //     setState(() {
+        //       _saveSearchHistory = value;
+        //     });
+        //   },
+        // ),
         _buildActionTile(
           icon: Icons.lock_outline,
           title: 'Change Password',
           subtitle: 'Update your account password',
           onTap: () => _showChangePasswordDialog(),
         ),
-        _buildActionTile(
-          icon: Icons.delete_outline,
-          title: 'Clear Data',
-          subtitle: 'Delete history and cache',
-          onTap: () => _showClearDataDialog(),
-        ),
+        // _buildActionTile(
+        //   icon: Icons.delete_outline,
+        //   title: 'Clear Data',
+        //   subtitle: 'Delete history and cache',
+        //   onTap: () => _showClearDataDialog(),
+        // ),
       ],
     );
   }
@@ -823,6 +854,7 @@ class _SettingsViewState extends State<SettingsView> {
         ],
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
@@ -852,6 +884,7 @@ class _SettingsViewState extends State<SettingsView> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       child: Row(
+        mainAxisSize: MainAxisSize.max,
         children: [
           Container(
             width: 40,
@@ -869,6 +902,7 @@ class _SettingsViewState extends State<SettingsView> {
           const SizedBox(width: 16),
           Expanded(
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
@@ -878,6 +912,8 @@ class _SettingsViewState extends State<SettingsView> {
                     fontWeight: FontWeight.w600,
                     color: Color(0xFF1F2937),
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 2),
                 Text(
@@ -886,15 +922,21 @@ class _SettingsViewState extends State<SettingsView> {
                     fontSize: 14,
                     color: Color(0xFF6B7280),
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
           ),
-          Switch(
-            value: value,
-            onChanged: onChanged,
-            activeThumbColor: const Color(0xFF0D9488),
-            activeTrackColor: const Color(0xFF0D9488).withOpacity(0.3),
+          const SizedBox(width: 12),
+          SizedBox(
+            width: 50,
+            child: Switch(
+              value: value,
+              onChanged: onChanged,
+              activeThumbColor: const Color(0xFF0D9488),
+              activeTrackColor: const Color(0xFF0D9488).withOpacity(0.3),
+            ),
           ),
         ],
       ),
@@ -915,6 +957,7 @@ class _SettingsViewState extends State<SettingsView> {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         child: Row(
+          mainAxisSize: MainAxisSize.max,
           children: [
             Container(
               width: 40,
@@ -932,6 +975,7 @@ class _SettingsViewState extends State<SettingsView> {
             const SizedBox(width: 16),
             Expanded(
               child: Column(
+                mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
@@ -941,6 +985,8 @@ class _SettingsViewState extends State<SettingsView> {
                       fontWeight: FontWeight.w600,
                       color: Color(0xFF1F2937),
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 2),
                   Text(
@@ -949,10 +995,13 @@ class _SettingsViewState extends State<SettingsView> {
                       fontSize: 14,
                       color: Color(0xFF6B7280),
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
             ),
+            const SizedBox(width: 12),
             const Icon(
               Icons.arrow_forward_ios,
               color: Color(0xFF9CA3AF),
@@ -989,40 +1038,6 @@ class _SettingsViewState extends State<SettingsView> {
             fontWeight: FontWeight.bold,
           ),
         ),
-      ),
-    );
-  }
-
-  void _showClearDataDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        title: const Text('Clear Data'),
-        content: const Text(
-          'Are you sure you want to delete all search history and cached data? This action cannot be undone.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              AppDialogs.showSnackBar(
-                message: 'Data cleared successfully',
-                backgroundColor: Colors.green,
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFEF4444),
-            ),
-            child: const Text('Delete', style: TextStyle(color: Colors.white)),
-          ),
-        ],
       ),
     );
   }
@@ -1200,5 +1215,78 @@ class _SettingsViewState extends State<SettingsView> {
         );
       },
     );
+  }
+
+  /// Format feature text from camelCase keys to readable format
+  /// Examples:
+  /// - maxVideos: 40 → "Up to 40 videos"
+  /// - maxVideos: null → "Unlimited videos"
+  /// - searchByImage: true → "Search by image"
+  /// - dailySearchLimit: 100 → "100 searches per day"
+  /// - searchByImage: false → (skipped)
+  String _formatFeatureText(String key, dynamic value) {
+    // Map specific keys to readable labels
+    const featureLabels = {
+      'maxVideos': 'Up to {value} videos',
+      'searchByImage': 'Search by image',
+      'searchByKeyword': 'Keyword search',
+      'dailySearchLimit': '{value} searches per day',
+      'videoDownload': 'Video download',
+      'prioritySupport': 'Priority support',
+      'customBranding': 'Custom branding',
+      'advancedEditing': 'Advanced editing',
+      'noWatermark': 'No watermark',
+      'hdExport': 'HD export',
+      'fourKExport': '4K export',
+      'unlimitedVideos': 'Unlimited videos',
+      'cloudStorage': '{value}GB cloud storage',
+    };
+
+    // Check if key has a specific label
+    if (featureLabels.containsKey(key)) {
+      String label = featureLabels[key]!;
+
+      // Replace {value} placeholder with actual value
+      if (label.contains('{value}')) {
+        if (value == null) {
+          // null = Unlimited
+          label = label.replaceAll('{value}', 'Unlimited');
+        } else if (value is num) {
+          label = label.replaceAll('{value}', value.toString());
+        } else {
+          return label.replaceAll('{value}', '');
+        }
+      }
+
+      return label;
+    }
+
+    // Fallback: convert camelCase to Title Case
+    final formatted = key
+        .replaceAllMapped(
+          RegExp(r'[A-Z]'),
+          (match) => ' ${match.group(0)}',
+        )
+        .trim();
+
+    if (formatted.isEmpty) return key;
+
+    return formatted[0].toUpperCase() + formatted.substring(1);
+  }
+
+  /// Format price with comma separator and currency
+  String _formatPrice(double price) {
+    if (price == 0) {
+      return 'Free';
+    }
+
+    // Format number with comma separator
+    final formatter = price.toStringAsFixed(0);
+    final withComma = formatter.replaceAllMapped(
+      RegExp(r'\B(?=(\d{3})+(?!\d))'),
+      (match) => ',',
+    );
+
+    return '$withComma VND';
   }
 }

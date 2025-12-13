@@ -317,7 +317,7 @@ class _ProfileViewState extends State<ProfileView> {
             const SizedBox(height: 24),
 
             // Statistics Section
-            _buildStatisticsSection(),
+            // _buildStatisticsSection(),
 
             const SizedBox(height: 24),
           ],
@@ -558,79 +558,79 @@ class _ProfileViewState extends State<ProfileView> {
     );
   }
 
-  Widget _buildStatisticsSection() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.06),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Activity Statistics',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF1F2937),
-            ),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: _buildStatItem(
-                  icon: Icons.video_library_outlined,
-                  title: 'Videos Watched',
-                  value: '142',
-                  color: const Color(0xFF0D9488),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _buildStatItem(
-                  icon: Icons.access_time,
-                  title: 'Watch Time',
-                  value: '24h',
-                  color: const Color(0xFF8B5CF6),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: _buildStatItem(
-                  icon: Icons.favorite_outline,
-                  title: 'Favorites',
-                  value: '38',
-                  color: const Color(0xFFEF4444),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _buildStatItem(
-                  icon: Icons.download_outlined,
-                  title: 'Downloads',
-                  value: '12',
-                  color: const Color(0xFF059669),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
+  // Widget _buildStatisticsSection() {
+  //   return Container(
+  //     padding: const EdgeInsets.all(20),
+  //     decoration: BoxDecoration(
+  //       color: Colors.white,
+  //       borderRadius: BorderRadius.circular(16),
+  //       boxShadow: [
+  //         BoxShadow(
+  //           color: Colors.black.withOpacity(0.06),
+  //           blurRadius: 12,
+  //           offset: const Offset(0, 4),
+  //         ),
+  //       ],
+  //     ),
+  //     child: Column(
+  //       crossAxisAlignment: CrossAxisAlignment.start,
+  //       children: [
+  //         const Text(
+  //           'Activity Statistics',
+  //           style: TextStyle(
+  //             fontSize: 18,
+  //             fontWeight: FontWeight.bold,
+  //             color: Color(0xFF1F2937),
+  //           ),
+  //         ),
+  //         const SizedBox(height: 16),
+  //         Row(
+  //           children: [
+  //             Expanded(
+  //               child: _buildStatItem(
+  //                 icon: Icons.video_library_outlined,
+  //                 title: 'Videos Watched',
+  //                 value: '142',
+  //                 color: const Color(0xFF0D9488),
+  //               ),
+  //             ),
+  //             const SizedBox(width: 16),
+  //             Expanded(
+  //               child: _buildStatItem(
+  //                 icon: Icons.access_time,
+  //                 title: 'Watch Time',
+  //                 value: '24h',
+  //                 color: const Color(0xFF8B5CF6),
+  //               ),
+  //             ),
+  //           ],
+  //         ),
+  //         const SizedBox(height: 16),
+  //         Row(
+  //           children: [
+  //             Expanded(
+  //               child: _buildStatItem(
+  //                 icon: Icons.favorite_outline,
+  //                 title: 'Favorites',
+  //                 value: '38',
+  //                 color: const Color(0xFFEF4444),
+  //               ),
+  //             ),
+  //             const SizedBox(width: 16),
+  //             Expanded(
+  //               child: _buildStatItem(
+  //                 icon: Icons.download_outlined,
+  //                 title: 'Downloads',
+  //                 value: '12',
+  //                 color: const Color(0xFF059669),
+  //               ),
+  //             ),
+  //           ],
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
   Widget _buildStatItem({
     required IconData icon,

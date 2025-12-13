@@ -1,4 +1,5 @@
 import 'package:bloc/bloc.dart';
+import 'package:dmvgenie/src/core/data/local/storage.dart';
 import 'package:injectable/injectable.dart';
 
 import '../../../data/models/register_request.dart';

@@ -24,25 +24,11 @@ class Plan with _$Plan {
 @freezed
 class PlanListResponse with _$PlanListResponse {
   const factory PlanListResponse({
-    required List<Plan> data,
-    required PaginationInfo pagination,
+    required List<Plan> plans,
   }) = _PlanListResponse;
 
   factory PlanListResponse.fromJson(Map<String, dynamic> json) =>
       _$PlanListResponseFromJson(json);
-}
-
-@freezed
-class PaginationInfo with _$PaginationInfo {
-  const factory PaginationInfo({
-    required int totalItems,
-    required int totalPages,
-    required int pageSize,
-    required int pageIndex,
-  }) = _PaginationInfo;
-
-  factory PaginationInfo.fromJson(Map<String, dynamic> json) =>
-      _$PaginationInfoFromJson(json);
 }
 
 @freezed

@@ -152,209 +152,221 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog>
         );
       },
       child: HideKeyboardOnTap(
-        child: AlertDialog(
+        child: Dialog(
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           elevation: 8,
-          contentPadding: const EdgeInsets.all(0),
           backgroundColor: Colors.white,
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Header
-                Container(
-                  width: double.maxFinite,
-                  decoration: BoxDecoration(
-                    color: isDarkMode
-                        ? Colors.grey[800]
-                        : const Color(0xFF0D9488).withOpacity(0.1),
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(20),
-                      topRight: Radius.circular(20),
-                    ),
-                  ),
-                  padding: const EdgeInsets.symmetric(vertical: 24),
-                  child: Column(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: const Color(0xFF0D9488).withOpacity(0.2),
-                        ),
-                        child: const Icon(
-                          Icons.lock,
-                          color: Color(0xFF0D9488),
-                          size: 32,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      const Text(
-                        'Change Password',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 0.3,
-                        ),
-                      ),
-                    ],
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Header
+              Container(
+                width: double.maxFinite,
+                decoration: BoxDecoration(
+                  color: isDarkMode
+                      ? Colors.grey[800]
+                      : const Color(0xFF0D9488).withOpacity(0.1),
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(20),
+                    topRight: Radius.circular(20),
                   ),
                 ),
-                // Content
-                Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // Info message
-                        Container(
-                          decoration: BoxDecoration(
-                            color: Colors.blue.withOpacity(0.1),
-                            border: const Border(
-                              left: BorderSide(
-                                color: Colors.blue,
-                                width: 4,
-                              ),
-                            ),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          padding: const EdgeInsets.all(12),
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.info_outline,
-                                color: Colors.blue,
-                                size: 16,
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  'Use a strong password with at least 8 characters',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.blue[700],
-                                    height: 1.4,
-                                  ),
+                padding: const EdgeInsets.symmetric(vertical: 24),
+                child: Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: const Color(0xFF0D9488).withOpacity(0.2),
+                      ),
+                      child: const Icon(
+                        Icons.lock,
+                        color: Color(0xFF0D9488),
+                        size: 32,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'Change Password',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.3,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Content
+              Flexible(
+                child: SingleChildScrollView(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Info message
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Colors.blue.withOpacity(0.1),
+                              border: const Border(
+                                left: BorderSide(
+                                  color: Colors.blue,
+                                  width: 4,
                                 ),
                               ),
-                            ],
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            padding: const EdgeInsets.all(12),
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.info_outline,
+                                  color: Colors.blue,
+                                  size: 16,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'Use a strong password with at least 8 characters',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.blue[700],
+                                      height: 1.4,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 24),
-                        // Current Password Field
-                        PasswordInputField(
-                          label: 'Current Password',
-                          hint: 'Enter your current password',
-                          controller: _currentPasswordController,
-                          focusNode: _currentPasswordFocus,
-                          textInputAction: TextInputAction.next,
-                          validator: _validateCurrentPassword,
-                          enabled: !_isLoading,
-                          onEditingComplete: () {
-                            _currentPasswordFocus.unfocus();
-                            FocusScope.of(context)
-                                .requestFocus(_newPasswordFocus);
-                          },
-                        ),
-                        const SizedBox(height: 20),
-                        // New Password Field
-                        PasswordInputField(
-                          label: 'New Password',
-                          hint: 'Enter your new password',
-                          controller: _newPasswordController,
-                          focusNode: _newPasswordFocus,
-                          textInputAction: TextInputAction.next,
-                          validator: _validateNewPassword,
-                          enabled: !_isLoading,
-                          onEditingComplete: () {
-                            _newPasswordFocus.unfocus();
-                            FocusScope.of(context)
-                                .requestFocus(_confirmPasswordFocus);
-                          },
-                        ),
-                        const SizedBox(height: 20),
-                        // Confirm Password Field
-                        PasswordInputField(
-                          label: 'Confirm Password',
-                          hint: 'Confirm your new password',
-                          controller: _confirmPasswordController,
-                          focusNode: _confirmPasswordFocus,
-                          textInputAction: TextInputAction.done,
-                          validator: _validateConfirmPassword,
-                          enabled: !_isLoading,
-                          onEditingComplete: () {
-                            _confirmPasswordFocus.unfocus();
-                          },
-                        ),
-                        const SizedBox(height: 20),
-                        // Password Strength Indicator
-                        _buildPasswordStrengthIndicator(),
-                      ],
+                          const SizedBox(height: 24),
+                          // Current Password Field
+                          PasswordInputField(
+                            label: 'Current Password',
+                            hint: 'Enter your current password',
+                            controller: _currentPasswordController,
+                            focusNode: _currentPasswordFocus,
+                            textInputAction: TextInputAction.next,
+                            validator: _validateCurrentPassword,
+                            enabled: !_isLoading,
+                            onEditingComplete: () {
+                              _currentPasswordFocus.unfocus();
+                              FocusScope.of(context)
+                                  .requestFocus(_newPasswordFocus);
+                            },
+                          ),
+                          const SizedBox(height: 20),
+                          // New Password Field
+                          PasswordInputField(
+                            label: 'New Password',
+                            hint: 'Enter your new password',
+                            controller: _newPasswordController,
+                            focusNode: _newPasswordFocus,
+                            textInputAction: TextInputAction.next,
+                            validator: _validateNewPassword,
+                            enabled: !_isLoading,
+                            onEditingComplete: () {
+                              _newPasswordFocus.unfocus();
+                              FocusScope.of(context)
+                                  .requestFocus(_confirmPasswordFocus);
+                            },
+                          ),
+                          const SizedBox(height: 20),
+                          // Confirm Password Field
+                          PasswordInputField(
+                            label: 'Confirm Password',
+                            hint: 'Confirm your new password',
+                            controller: _confirmPasswordController,
+                            focusNode: _confirmPasswordFocus,
+                            textInputAction: TextInputAction.done,
+                            validator: _validateConfirmPassword,
+                            enabled: !_isLoading,
+                            onEditingComplete: () {
+                              _confirmPasswordFocus.unfocus();
+                            },
+                          ),
+                          const SizedBox(height: 20),
+                          // Password Strength Indicator
+                          _buildPasswordStrengthIndicator(),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
-              style: TextButton.styleFrom(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               ),
-              child: Text(
-                'Cancel',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: isDarkMode ? Colors.grey[300] : Colors.grey[700],
-                ),
-              ),
-            ),
-            ScaleTransition(
-              scale: Tween<double>(begin: 1.0, end: 1.05)
-                  .animate(_animationController),
-              child: ElevatedButton(
-                onPressed: _isLoading
-                    ? null
-                    : (_passwordStrengthValid ? _handleChangePassword : null),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF0D9488),
-                  disabledBackgroundColor: Colors.grey[400],
-                  foregroundColor: Colors.white,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  elevation: 2,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                child: _isLoading
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor:
-                              AlwaysStoppedAnimation<Color>(Colors.white),
-                        ),
-                      )
-                    : const Text(
-                        'Update Password',
+              // Actions
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed:
+                          _isLoading ? null : () => Navigator.of(context).pop(),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 24, vertical: 12),
+                      ),
+                      child: Text(
+                        'Cancel',
                         style: TextStyle(
-                          fontWeight: FontWeight.w600,
                           fontSize: 14,
-                          letterSpacing: 0.5,
+                          fontWeight: FontWeight.w600,
+                          color:
+                              isDarkMode ? Colors.grey[300] : Colors.grey[700],
                         ),
                       ),
+                    ),
+                    const SizedBox(width: 12),
+                    ScaleTransition(
+                      scale: Tween<double>(begin: 1.0, end: 1.05)
+                          .animate(_animationController),
+                      child: ElevatedButton(
+                        onPressed: _isLoading
+                            ? null
+                            : (_passwordStrengthValid
+                                ? _handleChangePassword
+                                : null),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF0D9488),
+                          disabledBackgroundColor: Colors.grey[400],
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 24, vertical: 12),
+                          elevation: 2,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        child: _isLoading
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.white),
+                                ),
+                              )
+                            : const Text(
+                                'Update Password',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
-          actionsPadding: const EdgeInsets.all(16),
+            ],
+          ),
         ),
       ),
     );
