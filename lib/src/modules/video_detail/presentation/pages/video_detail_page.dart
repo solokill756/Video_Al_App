@@ -10,6 +10,9 @@ import 'package:dmvgenie/src/modules/video_detail/presentation/application/cubit
 import 'package:dmvgenie/src/modules/video_detail/presentation/widgets/improved_video_player.dart';
 import 'package:dmvgenie/src/modules/video_detail/presentation/application/cubit/private_search_cubit.dart';
 import 'package:dmvgenie/src/modules/video_detail/presentation/application/cubit/private_search_state.dart';
+import 'package:dmvgenie/src/modules/video_detail/presentation/application/cubit/processing_logs_cubit.dart';
+import 'package:dmvgenie/src/modules/video_detail/presentation/application/cubit/processing_logs_state.dart';
+import 'package:dmvgenie/src/modules/video_detail/presentation/widgets/processing_logs_timeline.dart';
 import 'package:dmvgenie/src/modules/video_detail/data/models/private_search_model.dart';
 import 'package:dmvgenie/src/modules/upload/data/remote/video_api_service.dart';
 import 'package:dmvgenie/src/modules/upload/data/remote/s3_upload_service.dart';
@@ -54,11 +57,18 @@ class _VideoDetailViewState extends State<VideoDetailView> {
   bool _isImageSearch = false;
   XFile? _selectedImage;
   PrivateSearchCubit? _privateSearchCubit;
+  late final ImagePicker _imagePicker;
+  bool _isPickingImage = false;
 
   @override
   void initState() {
     super.initState();
+    _imagePicker = ImagePicker();
     context.read<VideoDetailCubit>().getVideoDetail(widget.videoId);
+    // Load processing logs for the video
+    context.read<ProcessingLogsCubit>().getProcessingLogs(
+          videoId: widget.videoId,
+        );
   }
 
   @override
@@ -112,10 +122,8 @@ class _VideoDetailViewState extends State<VideoDetailView> {
 
     try {
       // Show loading
-      AppDialogs.showSnackBar(
-        message: 'Uploading image...',
-        backgroundColor: Colors.blue,
-      );
+      context.showLoadingDialog(
+          message: 'Uploading image for search...', type: LoadingType.dots);
 
       // Step 1: Get presigned URL for image
       final imageFileName =
@@ -142,6 +150,8 @@ class _VideoDetailViewState extends State<VideoDetailView> {
 
       // Step 3: Get image URL (remove query params from presigned URL)
       final imageUrl = presignedUrlResponse.url.split('?').first;
+
+      context.hideLoadingDialog();
 
       // Step 4: Search with image URL
       context.read<PrivateSearchCubit>().searchByImageUrl(imageUrl);
@@ -515,6 +525,59 @@ class _VideoDetailViewState extends State<VideoDetailView> {
             ),
           ),
 
+          // Processing Logs Timeline
+          Container(
+            margin: const EdgeInsets.only(top: 16, left: 16, right: 16),
+            child: BlocBuilder<ProcessingLogsCubit, ProcessingLogsState>(
+              builder: (context, state) {
+                return state.whenOrNull(
+                      loaded: (logs) => ProcessingLogsTimeline(
+                        processingLog: logs,
+                      ),
+                      loading: () => Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: const Padding(
+                          padding: EdgeInsets.all(24),
+                          child: CircularProgressIndicator(),
+                        ),
+                      ),
+                      error: (message) => Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEF4444).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: const Color(0xFFEF4444).withOpacity(0.3),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.error_outline,
+                              color: Color(0xFFEF4444),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                message,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  color: Color(0xFFEF4444),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ) ??
+                    const SizedBox.shrink();
+              },
+            ),
+          ),
+
           // Search Panel (Below video info)
           _buildSearchPanel(video),
         ],
@@ -644,15 +707,15 @@ class _VideoDetailViewState extends State<VideoDetailView> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              status == 'PROCESSING'
+              status == 'PENDING'
                   ? Icons.hourglass_bottom
                   : Icons.error_outline,
               size: 48,
-              color: status == 'PROCESSING' ? Colors.orange : Colors.red,
+              color: status == 'PENDING' ? Colors.orange : Colors.red,
             ),
             const SizedBox(height: 16),
             Text(
-              status == 'PROCESSING'
+              status == 'PENDING'
                   ? 'Video is being processed'
                   : 'Video processing failed',
               style: const TextStyle(
@@ -664,7 +727,7 @@ class _VideoDetailViewState extends State<VideoDetailView> {
             ),
             const SizedBox(height: 8),
             Text(
-              status == 'PROCESSING'
+              status == 'PENDING'
                   ? 'Please wait for processing to complete before searching'
                   : 'Please try uploading the video again',
               style: const TextStyle(
@@ -929,14 +992,28 @@ class _VideoDetailViewState extends State<VideoDetailView> {
       children: [
         GestureDetector(
           onTap: () async {
-            final ImagePicker picker = ImagePicker();
-            final XFile? image = await picker.pickImage(
-              source: ImageSource.gallery,
-            );
-            if (image != null) {
-              setState(() {
-                _selectedImage = image;
-              });
+            // Prevent multiple simultaneous picks
+            if (_isPickingImage) return;
+
+            _isPickingImage = true;
+            try {
+              final XFile? image = await _imagePicker.pickImage(
+                source: ImageSource.gallery,
+              );
+              if (image != null && mounted) {
+                setState(() {
+                  _selectedImage = image;
+                });
+              }
+            } catch (e) {
+              if (mounted) {
+                AppDialogs.showSnackBar(
+                  message: 'Error picking image: $e',
+                  backgroundColor: Colors.red,
+                );
+              }
+            } finally {
+              _isPickingImage = false;
             }
           },
           child: Container(
@@ -1374,9 +1451,18 @@ class _VideoDetailViewState extends State<VideoDetailView> {
           ),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Keep It'),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.grey,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: Colors.white),
+            ),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -1390,7 +1476,11 @@ class _VideoDetailViewState extends State<VideoDetailView> {
                 backgroundColor: Colors.red,
               );
             },
-            child: const Text('Delete'),
+            child: const Text(
+              'Delete',
+              style:
+                  TextStyle(color: Colors.white, backgroundColor: Colors.red),
+            ),
           ),
         ],
       ),
