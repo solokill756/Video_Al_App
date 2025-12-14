@@ -20,4 +20,6 @@ class PrivateSearchState with _$PrivateSearchState {
     required String sessionId,
   }) = _SearchResults;
   const factory PrivateSearchState.error(String message) = _Error;
+  const factory PrivateSearchState.permissionDenied(
+      String message, String sessionId) = _PermissionDenied;
 }

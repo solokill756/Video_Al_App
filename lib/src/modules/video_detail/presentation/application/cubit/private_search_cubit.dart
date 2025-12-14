@@ -47,6 +47,7 @@ class PrivateSearchCubit extends Cubit<PrivateSearchState> {
         sessionLoaded: (id, _) => _sessionId = id,
         searchResults: (results, totalIndexed, tookMs, sessionId) =>
             _sessionId = sessionId,
+        permissionDenied: (message, sessionId) => _sessionId = sessionId,
       );
 
       if (_sessionId == null) {
@@ -81,6 +82,7 @@ class PrivateSearchCubit extends Cubit<PrivateSearchState> {
         sessionLoaded: (id, _) => _sessionId = id,
         searchResults: (results, totalIndexed, tookMs, sessionId) =>
             _sessionId = sessionId,
+        permissionDenied: (message, sessionId) => _sessionId = sessionId,
       );
 
       if (_sessionId == null) {
@@ -89,6 +91,10 @@ class PrivateSearchCubit extends Cubit<PrivateSearchState> {
       }
 
       emit(const PrivateSearchState.searching());
+      final checkPermission = await checkCanSearchByImage(_sessionId!);
+      if (checkPermission == false) {
+        return;
+      }
       final response = await _repository.searchByImageUrl(
         sessionId: _sessionId!,
         imageUrl: imageUrl,
@@ -113,6 +119,9 @@ class PrivateSearchCubit extends Cubit<PrivateSearchState> {
 
       currentState.whenOrNull(
         sessionLoaded: (id, _) => sessionId = id,
+        searchResults: (results, totalIndexed, tookMs, sessionId) =>
+            sessionId = sessionId,
+        permissionDenied: (message, sessionId) => sessionId = sessionId,
       );
 
       if (sessionId != null) {
@@ -127,5 +136,19 @@ class PrivateSearchCubit extends Cubit<PrivateSearchState> {
   /// Reset state
   void reset() {
     emit(const PrivateSearchState.initial());
+  }
+
+  /// Check if can search by image
+  Future<bool> checkCanSearchByImage(String sessionId) async {
+    try {
+      await _repository.checkCanSearchByImage();
+      return true;
+    } catch (e) {
+      emit(PrivateSearchState.permissionDenied(
+        'You do not have permission to search by image.',
+        sessionId,
+      ));
+      return false;
+    }
   }
 }

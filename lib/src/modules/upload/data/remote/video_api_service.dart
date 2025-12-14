@@ -5,6 +5,7 @@ import 'package:retrofit/retrofit.dart';
 import '../../../../core/data/remote/base/api_response.dart';
 import '../model/video_model.dart';
 import '../../../video_detail/data/models/processing_log_model.dart';
+import '../../../video_detail/data/models/CheckCanSearchResponse.dart';
 
 part 'video_api_service.g.dart';
 
@@ -68,4 +69,7 @@ abstract class VideoApiService {
   Future<ProcessingLogsResponse> getProcessingLogs({
     @Path('videoId') required String videoId,
   });
+
+  @POST('/videos/check-can-search-by-image')
+  Future<CheckCanSearchResponse> checkCanSearchByImage();
 }

@@ -1,3 +1,5 @@
+import 'package:dmvgenie/src/modules/video_detail/data/models/CheckCanSearchResponse.dart';
+
 import '../../data/models/private_search_model.dart';
 
 abstract class PrivateSearchRepository {
@@ -20,4 +22,6 @@ abstract class PrivateSearchRepository {
 
   /// Unload session
   Future<void> unloadSession(String sessionId);
+
+  Future<CheckCanSearchResponse> checkCanSearchByImage();
 }

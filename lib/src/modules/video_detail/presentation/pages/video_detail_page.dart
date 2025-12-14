@@ -104,6 +104,7 @@ class _VideoDetailViewState extends State<VideoDetailView> {
     return state.whenOrNull(
       sessionLoaded: (sessionId, _) => sessionId,
       searchResults: (results, totalIndexed, tookMs, sessionId) => sessionId,
+      permissionDenied: (message, sessionId) => sessionId,
     );
   }
 
@@ -252,6 +253,13 @@ class _VideoDetailViewState extends State<VideoDetailView> {
                   AppDialogs.showSnackBar(
                     message: 'Searching completed!',
                     backgroundColor: Colors.green,
+                  );
+                },
+                permissionDenied: (message, sessionId) {
+                  context.hideLoadingDialog();
+                  AppDialogs.showSnackBar(
+                    message: message,
+                    backgroundColor: Colors.red,
                   );
                 },
                 error: (message) {

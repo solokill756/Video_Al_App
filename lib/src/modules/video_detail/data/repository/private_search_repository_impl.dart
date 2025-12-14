@@ -1,5 +1,7 @@
+import 'package:dmvgenie/src/modules/video_detail/data/models/CheckCanSearchResponse.dart';
 import 'package:injectable/injectable.dart';
 
+import '../../../upload/data/remote/video_api_service.dart';
 import '../../domain/repository/private_search_repository.dart';
 import '../models/private_search_model.dart';
 import '../remote/private_search_api_service.dart';
@@ -7,8 +9,9 @@ import '../remote/private_search_api_service.dart';
 @Injectable(as: PrivateSearchRepository)
 class PrivateSearchRepositoryImpl implements PrivateSearchRepository {
   final PrivateSearchApiService _apiService;
+  final VideoApiService _videoApiService;
 
-  PrivateSearchRepositoryImpl(this._apiService);
+  PrivateSearchRepositoryImpl(this._apiService, this._videoApiService);
 
   @override
   Future<LoadDataResponse> loadData(List<String> videoIds) async {
@@ -54,5 +57,10 @@ class PrivateSearchRepositoryImpl implements PrivateSearchRepository {
   Future<void> unloadSession(String sessionId) async {
     await _apiService.unloadSession(sessionId: sessionId);
   }
-}
 
+  @override
+  Future<CheckCanSearchResponse> checkCanSearchByImage() async {
+    final response = await _videoApiService.checkCanSearchByImage();
+    return response;
+  }
+}
