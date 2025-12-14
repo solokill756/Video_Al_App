@@ -25,6 +25,7 @@ class SettingsCubit extends Cubit<SettingsState> {
       final result = await _settingsRepository.getCurrentUser();
       result.fold((user) {
         _user = user;
+        Storage.setUserProfile(_user);
         emit(SettingsState.loaded(
           user: _user!,
         ));
@@ -176,7 +177,7 @@ class SettingsCubit extends Cubit<SettingsState> {
     final result = await _settingsRepository.uploadAvatar(filePath: filePath);
     result.fold((user) {
       emit(SettingsState.uploadAvatarSuccess('Avatar uploaded successfully'));
-      loadSettings();
+      loadSettings(isReload: true);
     }, (error) {
       error.maybeWhen(
         (code, message) =>
@@ -226,7 +227,7 @@ class SettingsCubit extends Cubit<SettingsState> {
     result.fold((response) {
       emit(SettingsState.twoFASuccess(response.message));
 
-      loadSettings();
+      loadSettings(isReload: true);
     }, (error) {
       error.maybeWhen(
         (code, message) =>
@@ -244,7 +245,7 @@ class SettingsCubit extends Cubit<SettingsState> {
     final result = await _settingsRepository.disable2FA(otpCode: otpCode);
     result.fold((response) {
       emit(SettingsState.twoFASuccess(response.message));
-      loadSettings();
+      loadSettings(isReload: true);
     }, (error) {
       error.maybeWhen(
         (code, message) =>
