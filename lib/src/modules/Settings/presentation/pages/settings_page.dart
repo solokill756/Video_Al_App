@@ -9,6 +9,7 @@ import '../../../../common/dialogs/custom_alert_dialog.dart';
 import '../../../app/app_router.dart';
 import '../../data/model/user_profile_model.dart';
 import '../application/cubit/settings_cubit.dart';
+import '../application/cubit/two_fa_cubit.dart';
 import '../components/change_password_dialog.dart';
 import '../components/disable_2fa_dialog.dart';
 import '../components/enable_2fa_dialog.dart';
@@ -1145,8 +1146,7 @@ class _SettingsViewState extends State<SettingsView> {
   void _handle2FAToggle(
     bool enable,
   ) {
-    // Lấy cubit từ context
-    final settingsCubit = context.read<SettingsCubit>();
+    final twoFACubit = context.read<TwoFACubit>();
 
     if (enable) {
       // Kích hoạt 2FA
@@ -1156,11 +1156,13 @@ class _SettingsViewState extends State<SettingsView> {
         builder: (_) =>
             // Cung cấp cubit cho dialog
             BlocProvider.value(
-          value: settingsCubit,
+          value: twoFACubit,
           child: const Enable2FADialog(),
         ),
       ).then((success) {
         if (success != true) {
+          // Reset 2FA state khi user cancel dialog
+          twoFACubit.reset();
           setState(() {
             _twoFactorAuth = false;
           });
@@ -1172,11 +1174,13 @@ class _SettingsViewState extends State<SettingsView> {
         context: context,
         barrierDismissible: false,
         builder: (_) => BlocProvider.value(
-          value: settingsCubit,
+          value: twoFACubit,
           child: const Disable2FADialog(),
         ),
       ).then((success) {
         if (success != true) {
+          // Reset 2FA state khi user cancel dialog
+          twoFACubit.reset();
           setState(() {
             _twoFactorAuth = true;
           });

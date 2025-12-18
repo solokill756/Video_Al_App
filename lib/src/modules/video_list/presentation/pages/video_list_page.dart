@@ -35,18 +35,7 @@ class _VideoListViewState extends State<VideoListView> {
     _scrollController = ScrollController();
     _scrollController.addListener(_onScroll);
 
-    // Restore state nếu có cache, nếu không thì load mới
-    final currentState = context.read<VideoCubit>().state;
-    if (currentState.maybeWhen(
-      videosLoaded: (_, __, ___) => true,
-      orElse: () => false,
-    )) {
-      // Đã có state, restore lại
-      context.read<VideoCubit>().restoreListState();
-    } else {
-      // Chưa có state, load mới
-      context.read<VideoCubit>().loadUserVideos(refresh: true);
-    }
+    context.read<VideoCubit>().loadUserVideos(refresh: true);
   }
 
   @override

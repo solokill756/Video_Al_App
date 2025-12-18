@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../../../common/dialogs/app_dialogs.dart';
-import '../application/cubit/settings_cubit.dart';
+import '../application/cubit/two_fa_cubit.dart';
 
 enum Step2FASetup { scanQr, enterCode }
 
@@ -26,7 +26,7 @@ class _Enable2FADialogState extends State<Enable2FADialog>
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-    context.read<SettingsCubit>().getLinkFor2FA();
+    context.read<TwoFACubit>().getLinkFor2FA();
     _codeController.addListener(_handleCodeChange);
   }
 
@@ -49,27 +49,28 @@ class _Enable2FADialogState extends State<Enable2FADialog>
 
   void _onVerifyPressed() {
     if (_codeController.text.length == 6) {
-      context.read<SettingsCubit>().enable2FA(otpCode: _codeController.text);
+      context.read<TwoFACubit>().enable2FA(otpCode: _codeController.text);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<SettingsCubit, SettingsState>(
-      listenWhen: (prev, current) =>
-          current is Settings2FALoadingLink ||
-          current is Settings2FAError ||
-          current is Settings2FASuccess,
+    return BlocConsumer<TwoFACubit, TwoFAState>(
+      listenWhen: (prev, current) => current.maybeWhen(
+        success: (_) => true,
+        error: (_, __) => true,
+        orElse: () => false,
+      ),
       listener: (context, state) {
         state.maybeWhen(
-          twoFASuccess: (message) {
+          success: (message) {
             Navigator.of(context, rootNavigator: true).pop();
             AppDialogs.showSnackBar(
               message: message,
               backgroundColor: Colors.green,
             );
           },
-          twoFAError: (message, previousUri) {
+          error: (message, previousUri) {
             AppDialogs.showSnackBar(
               message: message,
               backgroundColor: Colors.redAccent,
@@ -79,23 +80,25 @@ class _Enable2FADialogState extends State<Enable2FADialog>
         );
       },
       buildWhen: (prev, current) {
-        // Rebuild khi state là các state 2FA
-        final is2FAState = current is Settings2FALoadingLink ||
-            current is Settings2FALoadedLink ||
-            current is Settings2FAEnabling ||
-            current is Settings2FAError;
-        final was2FAState = prev is Settings2FALoadingLink ||
-            prev is Settings2FALoadedLink ||
-            prev is Settings2FAEnabling ||
-            prev is Settings2FAError;
-
-        // Rebuild nếu:
-        // 1. State hiện tại là 2FA state (luôn rebuild khi có state 2FA)
-        // 2. HOẶC đây là lần đầu (prev không phải 2FA state) để đảm bảo dialog hiển thị ngay
-        return is2FAState || !was2FAState;
+        // Rebuild chỉ khi state là các state 2FA
+        // Tránh rebuild khi state là _Loaded (từ loadSettings)
+        // để không làm mất dữ liệu profile
+        return current.maybeWhen(
+          initial: () => false,
+          loadingLink: () => true,
+          loadedLink: (_) => true,
+          enabling: (_) => true,
+          disabling: () => false,
+          success: (_) => false,
+          error: (_, __) => true,
+          orElse: () => false,
+        );
       },
       builder: (context, state) {
-        final bool isEnabling = state is Settings2FAEnabling;
+        final bool isEnabling = state.maybeWhen(
+          enabling: (_) => true,
+          orElse: () => false,
+        );
         final isDarkMode = Theme.of(context).brightness == Brightness.dark;
         final isCodeValid = _codeController.text.length == 6;
 
@@ -421,27 +424,27 @@ class _Enable2FADialogState extends State<Enable2FADialog>
     );
   }
 
-  Widget _buildQrCode(SettingsState state) {
+  Widget _buildQrCode(TwoFAState state) {
     return state.maybeWhen(
-      twoFALoadingLink: () => const SizedBox(
+      loadingLink: () => const SizedBox(
         width: 200,
         height: 200,
         child: Center(child: CircularProgressIndicator()),
       ),
-      twoFALoadedLink: (qrCodeUri) => QrImageView(
+      loadedLink: (qrCodeUri) => QrImageView(
         data: qrCodeUri,
         version: QrVersions.auto,
         size: 200.0,
         backgroundColor: Colors.white,
       ),
       // Giữ mã QR hiển thị ngay cả khi đang xác minh
-      twoFAEnabling: (previousUri) => QrImageView(
+      enabling: (previousUri) => QrImageView(
         data: previousUri ?? '',
         version: QrVersions.auto,
         size: 200.0,
         backgroundColor: Colors.white,
       ),
-      twoFAError: (message, previousUri) =>
+      error: (message, previousUri) =>
           previousUri != null && previousUri.isNotEmpty
               ? QrImageView(
                   data: previousUri,

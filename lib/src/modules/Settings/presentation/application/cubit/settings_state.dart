@@ -20,15 +20,6 @@ class SettingsState with _$SettingsState {
   const factory SettingsState.uploadingAvatar() = _UploadingAvatar;
   const factory SettingsState.uploadAvatarFailure(String message) =
       _UploadAvatarFailure;
-  const factory SettingsState.twoFASuccess(String message) = Settings2FASuccess;
-  const factory SettingsState.twoFAError(String message, String? previousUri) =
-      Settings2FAError;
-  const factory SettingsState.twoFALoadingLink() = Settings2FALoadingLink;
-  const factory SettingsState.twoFALoadedLink(String link) =
-      Settings2FALoadedLink;
-  const factory SettingsState.twoFAEnabling(String? previousUri) =
-      Settings2FAEnabling;
-  const factory SettingsState.twoFADisabling() = Settings2FADisabling;
   const factory SettingsState.changingPassword() = ChangingPassword;
   const factory SettingsState.changePasswordSuccess(String message) =
       ChangePasswordSuccess;

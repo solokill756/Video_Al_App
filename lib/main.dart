@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:isolate';
 
+import 'package:dmvgenie/src/modules/Settings/presentation/application/cubit/two_fa_cubit.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -85,6 +86,7 @@ Future<void> main() async {
               create: (context) => getIt<PrivateSearchCubit>(),
             ),
             BlocProvider(create: (context) => getIt<ProcessingLogsCubit>()),
+            BlocProvider(create: (context) => getIt<TwoFACubit>()),
           ],
           child: const AppWidget(),
         ),
