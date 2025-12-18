@@ -6,7 +6,6 @@ part 'CheckCanSearchResponse.g.dart';
 @freezed
 class CheckCanSearchResponse with _$CheckCanSearchResponse {
   const factory CheckCanSearchResponse({
-    required String statusCode,
     required String message,
   }) = _CheckCanSearchResponse;
 

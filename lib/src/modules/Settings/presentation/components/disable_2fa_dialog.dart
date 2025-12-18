@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../common/dialogs/app_dialogs.dart';
-import '../application/cubit/settings_cubit.dart';
+import '../application/cubit/two_fa_cubit.dart';
 
 enum InputFocusState { unfocused, focused, filled }
 
@@ -50,7 +50,7 @@ class _Disable2FADialogState extends State<Disable2FADialog>
 
   void _onDisablePressed() {
     if (_codeController.text.length == 6) {
-      context.read<SettingsCubit>().disable2FA(otpCode: _codeController.text);
+      context.read<TwoFACubit>().disable2FA(otpCode: _codeController.text);
     } else {
       AppDialogs.showSnackBar(
         message: 'Please enter a valid 6-digit code.',
@@ -61,12 +61,15 @@ class _Disable2FADialogState extends State<Disable2FADialog>
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<SettingsCubit, SettingsState>(
-      listenWhen: (prev, current) =>
-          current is Settings2FASuccess || current is Settings2FAError,
+    return BlocConsumer<TwoFACubit, TwoFAState>(
+      listenWhen: (prev, current) => current.maybeWhen(
+        success: (_) => true,
+        error: (_, __) => true,
+        orElse: () => false,
+      ),
       listener: (context, state) {
         state.maybeWhen(
-          twoFASuccess: (message) {
+          success: (message) {
             // Đóng dialog và hiển thị thông báo
             Navigator.of(context, rootNavigator: true)
                 .pop(); // Trả về true để báo thành công
@@ -75,7 +78,7 @@ class _Disable2FADialogState extends State<Disable2FADialog>
               backgroundColor: Colors.green,
             );
           },
-          twoFAError: (message, previousUri) {
+          error: (message, previousUri) {
             // Hiển thị lỗi
             AppDialogs.showSnackBar(
               message: message,
@@ -86,7 +89,10 @@ class _Disable2FADialogState extends State<Disable2FADialog>
         );
       },
       builder: (context, state) {
-        final bool isDisabling = state is Settings2FADisabling;
+        final bool isDisabling = state.maybeWhen(
+          disabling: () => true,
+          orElse: () => false,
+        );
         final isDarkMode = Theme.of(context).brightness == Brightness.dark;
         final isCodeValid = _codeController.text.length == 6;
 

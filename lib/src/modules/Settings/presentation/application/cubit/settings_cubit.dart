@@ -206,57 +206,6 @@ class SettingsCubit extends Cubit<SettingsState> {
     });
   }
 
-  Future<void> getLinkFor2FA() async {
-    emit(const SettingsState.twoFALoadingLink());
-    final result = await _settingsRepository.getLinkFor2FA();
-    result.fold((link) {
-      emit(SettingsState.twoFALoadedLink(link));
-    }, (error) {
-      error.maybeWhen(
-        (code, message) => emit(SettingsState.twoFAError(error.message, null)),
-        orElse: () {
-          emit(SettingsState.twoFAError(error.message, null));
-        },
-      );
-    });
-  }
-
-  Future<void> enable2FA({required String otpCode, String? previousUri}) async {
-    emit(SettingsState.twoFAEnabling(previousUri));
-    final result = await _settingsRepository.enable2FA(otpCode: otpCode);
-    result.fold((response) {
-      emit(SettingsState.twoFASuccess(response.message));
-
-      loadSettings(isReload: true);
-    }, (error) {
-      error.maybeWhen(
-        (code, message) =>
-            emit(SettingsState.twoFAError(error.message, previousUri)),
-        orElse: () {
-          emit(SettingsState.twoFAError(error.message, previousUri));
-        },
-      );
-    });
-  }
-
-  Future<void> disable2FA(
-      {required String otpCode, String? previousUri}) async {
-    emit(const SettingsState.twoFADisabling());
-    final result = await _settingsRepository.disable2FA(otpCode: otpCode);
-    result.fold((response) {
-      emit(SettingsState.twoFASuccess(response.message));
-      loadSettings(isReload: true);
-    }, (error) {
-      error.maybeWhen(
-        (code, message) =>
-            emit(SettingsState.twoFAError(error.message, previousUri)),
-        orElse: () {
-          emit(SettingsState.twoFAError(error.message, previousUri));
-        },
-      );
-    });
-  }
-
   Future<void> changePassword({
     required String currentPassword,
     required String newPassword,
