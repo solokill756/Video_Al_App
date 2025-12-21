@@ -20,6 +20,7 @@ import 'package:dmvgenie/src/common/utils/getit_utils.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../../common/widgets/loading_widget.dart';
+import '../../../video_list/presentation/application/cubit/video_cubit.dart';
 
 @RoutePage()
 class VideoDetailPage extends StatelessWidget {
@@ -231,6 +232,31 @@ class _VideoDetailViewState extends State<VideoDetailView> {
               state.whenOrNull(
                 detailLoaded: (video) {
                   _loadSessionIfNeeded(video);
+                },
+                deleting: () {
+                  context.showLoadingDialog(
+                    message: 'Deleting video...',
+                    type: LoadingType.dots,
+                  );
+                },
+                deleteSuccess: () {
+                  context.hideLoadingDialog();
+                  AppDialogs.showSnackBar(
+                    message: 'Video deleted successfully!',
+                    backgroundColor: Colors.green,
+                  );
+
+                  if (mounted) {
+                    context.read<VideoCubit>().loadUserVideos(refresh: true);
+                    context.router.maybePop();
+                  }
+                },
+                deleteFailure: (message) {
+                  context.hideLoadingDialog();
+                  AppDialogs.showSnackBar(
+                    message: message,
+                    backgroundColor: Colors.red,
+                  );
                 },
               );
             },
@@ -1479,10 +1505,6 @@ class _VideoDetailViewState extends State<VideoDetailView> {
             onPressed: () {
               context.read<VideoDetailCubit>().deleteVideo(video.id);
               Navigator.pop(context);
-              AppDialogs.showSnackBar(
-                message: 'Video deleted successfully!',
-                backgroundColor: Colors.red,
-              );
             },
             child: const Text(
               'Delete',
