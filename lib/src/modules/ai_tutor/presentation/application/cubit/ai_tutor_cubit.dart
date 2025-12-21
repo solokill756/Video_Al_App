@@ -7,7 +7,7 @@ import '../../../data/models/mastra_response_model.dart';
 import '../../../domain/repository/ai_tutor_repository.dart';
 import 'ai_tutor_state.dart';
 
-@injectable
+@Singleton()
 class AITutorCubit extends Cubit<AITutorState> {
   final AITutorRepository _repository;
   final SettingsRepository _settingsRepository;

@@ -43,7 +43,6 @@ Future<void> main() async {
         statusBarIconBrightness: Brightness.dark,
       ),
     );
-    // await HiveBoxes.init();
     await AppEnvironment.setup();
     await Storage.setup();
     await GetItUtils.setup();
@@ -80,7 +79,7 @@ Future<void> main() async {
               create: (context) => getIt<SearchCubit>(),
             ),
             BlocProvider(
-              create: (context) => getIt<AITutorCubit>()..loadConversations(),
+              create: (context) => getIt<AITutorCubit>(),
             ),
             BlocProvider(
               create: (context) => getIt<PrivateSearchCubit>(),

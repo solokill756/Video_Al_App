@@ -66,7 +66,6 @@ class UploadCubit extends Cubit<UploadState> {
               progress: progress, fileName: videoFile.name));
         },
       );
-      emit(UploadState.uploadingToS3(progress: 100, fileName: videoFile.name));
 
       // Bước 4: Upload thumbnail nếu có
       String? thumbnailUrl;

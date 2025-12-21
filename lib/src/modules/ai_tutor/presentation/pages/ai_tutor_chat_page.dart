@@ -28,6 +28,10 @@ class _AITutorChatPageNewState extends State<AITutorChatPageNew> {
     _messageController.addListener(() {
       setState(() {});
     });
+    // Load conversations when page is initialized
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<AITutorCubit>().loadConversations();
+    });
   }
 
   @override

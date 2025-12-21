@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:dmvgenie/src/modules/upload/data/model/video_model.dart';
@@ -54,7 +55,9 @@ class VideoDetailCubit extends Cubit<VideoDetailState> {
       await videoDetailRepository.deleteVideo(videoId: videoId);
       emit(const VideoDetailState.deleteSuccess());
     } catch (e) {
-      emit(VideoDetailState.error(message: 'Error deleting video: $e'));
+      debugPrint('Error deleting video: $e');
+      emit(VideoDetailState.deleteFailure(message: 'Error deleting video !'));
+      await getVideoDetail(videoId);
     }
   }
 

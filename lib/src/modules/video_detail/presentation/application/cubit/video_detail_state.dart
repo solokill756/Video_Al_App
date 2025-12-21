@@ -16,6 +16,8 @@ class VideoDetailState with _$VideoDetailState {
 
   const factory VideoDetailState.deleting() = Deleting;
   const factory VideoDetailState.deleteSuccess() = DeleteSuccess;
+  const factory VideoDetailState.deleteFailure({required String message}) =
+      DeleteFailure;
 
   const factory VideoDetailState.error({required String message}) = Error;
 }
